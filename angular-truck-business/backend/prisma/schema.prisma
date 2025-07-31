@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Employee {
+  id           String   @id @map("Employee_ID")
+  name         String
+  position     String
+  phone        String
+
+  attendances  Attendance[]
+  jobAssignments JobAssignment[]
+  monthlySummaries MonthlySummary[]
+}
+
+model Attendance {
+  id          String   @id @map("Attendance_ID")
+  employeeId  String
+  checkIn     DateTime @map("CheckIn_Time")
+  checkOut    DateTime @map("CheckOut_Time")
+  date        DateTime
+
+  employee    Employee @relation(fields: [employeeId], references: [id])
+}
+
+model JobAssignment {
+  id           String   @id @map("Job_ID")
+  employeeId   String
+  description  String   @map("Job_Description")
+  assignedDate DateTime
+  status       String
+
+  employee     Employee @relation(fields: [employeeId], references: [id])
+  trips        Trip[]
+}
+
+model Trip {
+  id            String   @id @map("Trip_ID")
+  jobId         String
+  distanceKM    Int      @map("Distance_KM")
+  fuelUsedLiters Int     @map("Fuel_Used_Liters")
+  fuelCost      Int
+
+  jobAssignment JobAssignment @relation(fields: [jobId], references: [id])
+}
+
+model TravelCost {
+  id            Int     @id @default(autoincrement())
+  minDistance   Int
+  maxDistance   Int?
+  rateBaht      Int
+}
+
+model MonthlySummary {
+  id            Int     @id @default(autoincrement())
+  employeeId    String
+  month         String
+  totalTrips    Int
+  totalFuelCost Int
+  totalEarnings Int
+
+  employee      Employee @relation(fields: [employeeId], references: [id])
+}

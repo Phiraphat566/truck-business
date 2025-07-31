@@ -1,0 +1,147 @@
+<a
+  routerLink="/general"
+  routerLinkActive="active-link"
+  [routerLinkActiveOptions]="{ exact: true }"
+  class="nav-item"
+>
+</a>
+
+<!-- general.component.html -->
+<div class="p-6 space-y-6 bg-gray-100 min-h-screen overflow-y-auto">
+  <!-- Top Stat Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="bg-white p-4 rounded shadow">
+      <p class="text-gray-600">NEW ACCOUNTS</p>
+      <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-green-600">234%</h2>
+        <span class="bg-blue-100 text-blue-600 rounded-full px-2">58</span>
+      </div>
+    </div>
+    <div class="bg-white p-4 rounded shadow">
+      <p class="text-gray-600">TOTAL EXPENSES</p>
+      <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-red-600">71%</h2>
+        <span class="bg-red-100 text-red-600 rounded-full px-2">62</span>
+      </div>
+    </div>
+    <div class="bg-white p-4 rounded shadow">
+      <p class="text-gray-600">COMPANY VALUE</p>
+      <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-gray-800">$1.45M</h2>
+        <span class="bg-yellow-100 text-yellow-600 rounded-full px-2">72</span>
+      </div>
+    </div>
+    <div class="bg-white p-4 rounded shadow">
+      <p class="text-gray-600">NEW EMPLOYEES</p>
+      <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-green-600">+34 hires</h2>
+        <span class="bg-green-100 text-green-600 rounded-full px-2">81</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart and Circular Chart -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <!-- Traffic Sources Chart -->
+    <div class="bg-white rounded-xl shadow-md p-6 w-full mb-6">
+        <h2 class="text-lg font-semibold mb-4">Traffic Sources</h2>
+        <canvas baseChart
+        [data]="trafficChart"
+        [options]="trafficOptions"
+        [type]="trafficType"
+        class="w-full h-64">
+        </canvas>
+    </div>
+
+    <!-- Circular Chart -->
+    <div class="bg-white rounded-xl shadow-md p-6 w-full mb-6">
+      <h2 class="text-lg font-semibold mb-4">Circular Chart</h2>
+      <canvas baseChart
+  [data]="trafficChart"
+  [options]="trafficOptions"
+  [type]="trafficType"
+  class="w-full h-64">
+</canvas>
+    </div>
+
+    <!-- Recent Activities -->
+    <div class="bg-white rounded-xl shadow-md p-6 w-full mb-6">
+      <h2 class="text-lg font-semibold mb-4">Recent Activities</h2>
+      <ul class="space-y-2">
+        <li class="flex items-center justify-between">
+          <span>New user registered</span>
+          <span class="text-gray-500">5 mins ago</span>
+        </li>
+        <li class="flex items-center justify-between">
+          <span>New order placed</span>
+          <span class="text-gray-500">10 mins ago</span>
+        </li>
+        <li class="flex items-center justify-between">
+          <span>Server rebooted</span>
+          <span class="text-gray-500">30 mins ago</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Circular Income Progress -->
+    <div class="bg-white rounded-xl shadow-md p-6 w-full md:w-1/2">
+  <h2 class="text-lg font-semibold mb-4">Income Progress</h2>
+  <canvas baseChart
+    [data]="{
+      labels: ['Complete', 'Remaining'],
+      datasets: [
+        {
+          data: [incomeProgressValue, 100 - incomeProgressValue],
+          backgroundColor: ['#34d399', '#e5e7eb']
+        }
+      ]
+    }"
+    [type]="'doughnut'"
+    class="w-full h-60">
+  </canvas>
+</div>
+
+  <!-- Bottom Grid Summary -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="bg-white p-4 rounded shadow text-center">
+      <p class="text-gray-600">Income</p>
+      <h2 class="text-xl font-bold">$5,456</h2>
+      <p class="text-green-600">+14%</p>
+    </div>
+    <div class="bg-white p-4 rounded shadow text-center">
+      <p class="text-gray-600">Expenses</p>
+      <h2 class="text-xl font-bold">$4,764</h2>
+      <p class="text-red-600">-8%</p>
+    </div>
+    <div class="bg-white p-4 rounded shadow text-center">
+      <p class="text-gray-600">Spendings</p>
+      <h2 class="text-xl font-bold">$1.5M</h2>
+      <p class="text-green-600">+15%</p>
+    </div>
+    <div class="bg-white p-4 rounded shadow text-center">
+      <p class="text-gray-600">Totals</p>
+      <h2 class="text-xl font-bold">$31,564</h2>
+      <p class="text-yellow-600">+76%</p>
+    </div>
+  </div>
+
+  <!-- Target Section -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="bg-white p-4 rounded shadow text-center">
+      <p class="text-gray-600">Income Target</p>
+      <p class="text-red-600 font-bold">71%</p>
+    </div>
+    <div class="bg-white p-4 rounded shadow text-center">
+      <p class="text-gray-600">Expenses Target</p>
+      <p class="text-green-600 font-bold">54%</p>
+    </div>
+    <div class="bg-white p-4 rounded shadow text-center">
+      <p class="text-gray-600">Spendings Target</p>
+      <p class="text-yellow-600 font-bold">32%</p>
+    </div>
+    <div class="bg-white p-4 rounded shadow text-center">
+      <p class="text-gray-600">Totals Target</p>
+      <p class="text-blue-600 font-bold">89%</p>
+    </div>
+  </div>
+</div>

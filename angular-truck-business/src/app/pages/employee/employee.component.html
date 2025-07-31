@@ -1,0 +1,118 @@
+
+<div class="w-full min-h-screen bg-gray-300 flex flex-col items-center py-8">
+  <!-- หัวเรื่อง -->
+  <div class="w-[90%] max-w-4xl mx-auto mb-8">
+    <div class="bg-gray-500 rounded-xl px-6 py-3 flex justify-center items-center">
+      <h1 class="text-2xl font-bold text-center text-white">employee (พนักงาน)</h1>
+    </div>
+  </div>
+
+  <!-- กล่องข้อมูลหลัก -->
+  <div class="w-[90%] max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-6">
+    <div class="flex flex-row items-center justify-between mb-4">
+      <div class="flex gap-2">
+        <select class="bg-blue-100 text-blue-900 px-3 py-1 rounded font-medium">
+          <option>All Data</option>
+          <option>Driver</option>
+          <option>Staff</option>
+        </select>
+        <select class="bg-blue-100 text-blue-900 px-3 py-1 rounded font-medium">
+          <option>Add New Employee</option>
+          <option>Import Excel</option>
+        </select>
+      </div>
+      <button class="text-teal-600 font-medium hover:underline" (click)="editingMode = !editingMode">Edit</button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full table-auto text-base">
+        <thead>
+          <tr class="border-b text-left bg-gray-50">
+            <th class="py-2 font-semibold">Photo</th>
+            <th class="py-2 font-semibold">Employee ID</th>
+            <th class="py-2 font-semibold">First Name</th>
+            <th class="py-2 font-semibold">Last Name</th>
+            <th class="py-2 font-semibold">Job Position</th>
+            <th *ngIf="editingMode" class="py-2 font-semibold text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let emp of employees; let i = index" class="border-b cursor-pointer hover:bg-gray-100">
+            <td class="py-2">
+              <img [src]="emp.imageUrl || 'assets/placeholder.png'" alt="photo" class="w-10 h-10 rounded-full object-cover border" />
+            </td>
+            <td class="py-2">{{ emp.id || ('ED00' + (i+1)) }}</td>
+            <td class="py-2">{{ emp.firstName }}</td>
+            <td class="py-2">{{ emp.lastName }}</td>
+            <td class="py-2">{{ emp.position }}</td>
+            <td *ngIf="editingMode" class="py-2 text-center flex gap-2 justify-center items-center">
+              <button (click)="openEditPopupFor(i); $event.stopPropagation()" class="text-gray-600 hover:text-blue-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6.536-6.536a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13zm0 0V17h4" /></svg>
+              </button>
+              <button (click)="confirmDelete(i); $event.stopPropagation()" class="text-red-600 hover:text-red-800">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+  <!-- Popup Confirm Delete -->
+  <div *ngIf="showDeleteConfirm && deleteIndex !== null" class="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
+    <div class="bg-white p-6 rounded-lg w-full max-w-sm flex flex-col items-center">
+      <h2 class="text-xl font-semibold mb-4 text-red-600">ยืนยันการลบพนักงาน</h2>
+      <p class="mb-4">คุณต้องการลบพนักงาน <span class="font-bold">{{ employees[deleteIndex]?.firstName || '' }} {{ employees[deleteIndex]?.lastName || '' }}</span> ใช่หรือไม่?</p>
+      <div class="flex gap-4">
+        <button (click)="deleteEmployee(deleteIndex!)" class="bg-red-600 text-white px-4 py-1 rounded">ลบ</button>
+        <button (click)="showDeleteConfirm = false" class="bg-gray-300 text-gray-700 px-4 py-1 rounded">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div *ngIf="showToast" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-2 rounded shadow-lg z-[100] transition-opacity duration-300">
+    ลบข้อมูลพนักงานเรียบร้อยแล้ว
+  </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Popup Edit/Add Employee -->
+  <div *ngIf="showPopup" class="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
+    <div class="bg-white p-6 rounded-lg w-full max-w-md">
+      <h2 class="text-xl font-semibold mb-4">{{ editingMode ? 'แก้ไขพนักงาน' : 'เพิ่มพนักงาน' }}</h2>
+      <form (ngSubmit)="submitForm()">
+        <input [(ngModel)]="form.firstName" name="firstName" placeholder="ชื่อ" class="input-style" required />
+        <input [(ngModel)]="form.lastName" name="lastName" placeholder="นามสกุล" class="input-style" required />
+        <input [(ngModel)]="form.position" name="position" placeholder="ตำแหน่ง" class="input-style" />
+        <input [(ngModel)]="form.id" name="id" placeholder="รหัสพนักงาน" class="input-style" />
+        <input [(ngModel)]="form.imageUrl" name="imageUrl" placeholder="ลิงก์รูปภาพ" class="input-style" />
+        <div class="flex justify-between mt-4">
+          <button type="submit" class="bg-blue-600 text-white px-4 py-1 rounded">บันทึก</button>
+          <button type="button" (click)="closePopup()" class="text-gray-500">ยกเลิก</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Popup Employee Detail -->
+  <div *ngIf="showDetailPopup" class="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
+    <div class="bg-gray-300 rounded-2xl shadow-lg flex flex-col items-center p-6 w-full max-w-sm">
+      <img [src]="selectedEmployee?.imageUrl || 'assets/placeholder.png'" alt="photo" class="w-28 h-28 rounded-full object-cover mb-4" />
+      <div class="bg-white rounded-xl shadow p-6 w-full flex flex-col items-start">
+        <div class="text-lg font-bold mb-1">{{ selectedEmployee?.firstName }} {{ selectedEmployee?.lastName }}</div>
+        <div class="mb-3 text-gray-700">{{ selectedEmployee?.position }}</div>
+        <div class="flex items-center gap-2 mb-2 text-gray-700">
+          <span><i class="ni ni-email-83"></i></span>
+          <span>{{ selectedEmployee?.email }}</span>
+        </div>
+        <div class="flex items-center gap-2 mb-2 text-gray-700">
+          <span><i class="ni ni-mobile-button"></i></span>
+          <span>{{ selectedEmployee?.phone }}</span>
+        </div>
+        <div class="flex items-center gap-2 mb-2 text-gray-700">
+          <span><i class="ni ni-pin-3"></i></span>
+          <span>{{ selectedEmployee?.company }}</span>
+        </div>
+      </div>
+      <button (click)="closeDetailPopup()" class="mt-4 px-4 py-2 bg-gray-600 text-white rounded">ปิด</button>
+    </div>
+  </div>
+</div>
