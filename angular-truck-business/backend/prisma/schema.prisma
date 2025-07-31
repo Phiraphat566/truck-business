@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,61 +8,150 @@ datasource db {
 }
 
 model Employee {
-  id           String   @id @map("Employee_ID")
-  name         String
-  position     String
-  phone        String
+  id             String           @id @map("employee_id")
+  name           String           @db.VarChar(255)
+  position       String           @db.VarChar(255)
+  phone          String           @db.VarChar(50)
+  email          String?          @db.VarChar(255)
+  profileImagePath String?        @map("profile_image_path") @db.VarChar(255)
 
-  attendances  Attendance[]
-  jobAssignments JobAssignment[]
-  monthlySummaries MonthlySummary[]
+  Attendance     Attendance[]
+  EmployeeCall   EmployeeCall[]
+  JobAssignment  JobAssignment[]
+  MonthlySummary MonthlySummary[]
+  WorkLog        WorkLog[]
 }
 
-model Attendance {
-  id          String   @id @map("Attendance_ID")
-  employeeId  String
-  checkIn     DateTime @map("CheckIn_Time")
-  checkOut    DateTime @map("CheckOut_Time")
-  date        DateTime
 
-  employee    Employee @relation(fields: [employeeId], references: [id])
+model Attendance {
+  id          String   @id @map("attendance_id")
+  employee_id String
+  check_in    DateTime @db.DateTime(0)
+  check_out   DateTime @db.DateTime(0)
+  Employee    Employee @relation(fields: [employee_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "Attendance_ibfk_1")
+
+  @@index([employee_id], map: "employee_id")
 }
 
 model JobAssignment {
-  id           String   @id @map("Job_ID")
-  employeeId   String
-  description  String   @map("Job_Description")
-  assignedDate DateTime
-  status       String
+  id              String   @id @map("job_id")
+  employee_id     String
+  job_description String   @db.Text
+  assigned_date   DateTime @db.DateTime(0)
+  status          String   @db.VarChar(100)
+  Employee        Employee @relation(fields: [employee_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "JobAssignment_ibfk_1")
+  Trip            Trip[]
 
-  employee     Employee @relation(fields: [employeeId], references: [id])
-  trips        Trip[]
+  @@index([employee_id], map: "employee_id")
+}
+
+model WorkLog {
+  id          Int      @id @default(autoincrement())
+  employee_id String
+  work_date   DateTime @db.Date
+  Employee    Employee @relation(fields: [employee_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "WorkLog_ibfk_1")
+
+  @@unique([employee_id, work_date], map: "employee_id")
+}
+
+model Truck {
+  id               String             @id @map("truck_id")
+  plate            String             @db.VarChar(50)
+  model            String?            @db.VarChar(100)
+  total_distance   Int?               @default(0)
+  FuelLog          FuelLog[]
+  Trip             Trip[]
+  TruckDistanceLog TruckDistanceLog[]
+  TruckExpense     TruckExpense[]
 }
 
 model Trip {
-  id            String   @id @map("Trip_ID")
-  jobId         String
-  distanceKM    Int      @map("Distance_KM")
-  fuelUsedLiters Int     @map("Fuel_Used_Liters")
-  fuelCost      Int
+  id               String        @id @map("trip_id")
+  job_id           String
+  truck_id         String
+  distance_km      Int
+  fuel_used_liters Int
+  fuel_cost        Int
+  JobAssignment    JobAssignment @relation(fields: [job_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "Trip_ibfk_1")
+  Truck            Truck         @relation(fields: [truck_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "Trip_ibfk_2")
 
-  jobAssignment JobAssignment @relation(fields: [jobId], references: [id])
+  @@index([job_id], map: "job_id")
+  @@index([truck_id], map: "truck_id")
 }
 
-model TravelCost {
-  id            Int     @id @default(autoincrement())
-  minDistance   Int
-  maxDistance   Int?
-  rateBaht      Int
+model FuelLog {
+  id           Int      @id @default(autoincrement())
+  truck_id     String
+  fuel_date    DateTime @db.Date
+  round_number Int
+  liters       Int
+  cost         Decimal  @db.Decimal(10, 2)
+  Truck        Truck    @relation(fields: [truck_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FuelLog_ibfk_1")
+
+  @@index([truck_id], map: "truck_id")
+}
+
+model TruckDistanceLog {
+  id           Int      @id @default(autoincrement())
+  truck_id     String
+  log_date     DateTime @db.Date
+  round_number Int
+  distance_km  Int
+  Truck        Truck    @relation(fields: [truck_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "TruckDistanceLog_ibfk_1")
+
+  @@index([truck_id], map: "truck_id")
+}
+
+model TruckExpense {
+  id           Int      @id @default(autoincrement())
+  truck_id     String
+  expense_date DateTime @db.Date
+  description  String?  @db.Text
+  amount       Decimal  @db.Decimal(10, 2)
+  Truck        Truck    @relation(fields: [truck_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "TruckExpense_ibfk_1")
+
+  @@index([truck_id], map: "truck_id")
+}
+
+model EmployeeCall {
+  id          Int       @id @default(autoincrement())
+  employee_id String
+  call_date   DateTime  @db.Date
+  message     String?   @db.Text
+  created_at  DateTime? @default(now()) @db.DateTime(0)
+  Employee    Employee  @relation(fields: [employee_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "EmployeeCall_ibfk_1")
+
+  @@index([employee_id], map: "employee_id")
 }
 
 model MonthlySummary {
-  id            Int     @id @default(autoincrement())
-  employeeId    String
-  month         String
-  totalTrips    Int
-  totalFuelCost Int
-  totalEarnings Int
+  id              Int      @id @default(autoincrement())
+  employee_id     String
+  month           String   @db.VarChar(20)
+  total_trips     Int
+  total_fuel_cost Decimal  @db.Decimal(10, 2)
+  total_earnings  Decimal  @db.Decimal(10, 2)
+  salary          Decimal? @default(0.00) @db.Decimal(10, 2)
+  truck_expense   Decimal? @default(0.00) @db.Decimal(10, 2)
+  Employee        Employee @relation(fields: [employee_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "MonthlySummary_ibfk_1")
 
-  employee      Employee @relation(fields: [employeeId], references: [id])
+  @@index([employee_id], map: "employee_id")
+}
+
+model TravelCost {
+  id           Int     @id @default(autoincrement())
+  min_distance Int
+  max_distance Int?
+  rate_baht    Decimal @db.Decimal(10, 2)
+}
+
+model Income {
+  id                  Int      @id @default(autoincrement())
+  income_date         DateTime @db.Date               @map("income_date")
+  description         String   @db.Text
+  category            String   @db.VarChar(100)
+  amount              Decimal  @db.Decimal(10, 2)
+  contract_image_path String?  @db.VarChar(255)       @map("contract_image_path")
+  created_at          DateTime @default(now())        @map("created_at") @db.DateTime(0)
+
 }

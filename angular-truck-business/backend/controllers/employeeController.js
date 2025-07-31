@@ -4,7 +4,16 @@ const prisma = new PrismaClient();
 //  ดึงพนักงานทั้งหมด
 export const getAllEmployees = async (req, res) => {
   try {
-    const employees = await prisma.employee.findMany();
+    const employees = await prisma.employee.findMany({
+      select: {
+        id: true,
+        name: true,
+        position: true,
+        phone: true,
+        email: true,
+        profileImagePath: true
+      }
+    });
     res.json(employees);
   } catch (error) {
     console.error(error);
@@ -63,6 +72,8 @@ export const getEmployeeSummary = async (req, res) => {
       name: employee.name,
       position: employee.position,
       phone: employee.phone,
+      email: employee.email,
+      profileImagePath: employee.profileImagePath,
       totalTrips,
       totalDistance,
       totalFuelCost,
@@ -74,21 +85,20 @@ export const getEmployeeSummary = async (req, res) => {
   }
 };
 
-//  เพิ่มพนักงานใหม่ (ต้องมี id ส่งมา เช่น EMP005)
+
+// เพิ่มพนักงานใหม่
 export const createEmployee = async (req, res) => {
-  const { name, position, phone } = req.body;
+  const { name, position, phone, email, profileImagePath } = req.body;
 
   if (!name || !position || !phone) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
   try {
-    // 1. ดึง employee id ทั้งหมดที่ขึ้นต้นด้วย EMP
     const employees = await prisma.employee.findMany({
       select: { id: true }
     });
 
-    // 2. ดึงเลขจาก EMPxxx แล้วหาเลขที่มากที่สุด
     const maxNumber = employees.reduce((max, emp) => {
       const match = emp.id.match(/^EMP(\d{3})$/);
       if (match) {
@@ -98,16 +108,16 @@ export const createEmployee = async (req, res) => {
       return max;
     }, 0);
 
-    // 3. สร้างรหัสใหม่ เช่น EMP006
     const newId = `EMP${String(maxNumber + 1).padStart(3, '0')}`;
 
-    // 4. สร้างพนักงานใหม่
     const newEmployee = await prisma.employee.create({
       data: {
         id: newId,
         name,
         position,
-        phone
+        phone,
+        email,
+        profileImagePath
       }
     });
 
@@ -117,6 +127,7 @@ export const createEmployee = async (req, res) => {
     res.status(500).json({ error: 'Failed to create employee' });
   }
 };
+
 
 
 
@@ -140,12 +151,12 @@ export const deleteEmployee = async (req, res) => {
 //  แก้ไขพนักงาน
 export const updateEmployee = async (req, res) => {
   const { id } = req.params;
-  const { name, position, phone } = req.body;
+  const { name, position, phone, email, profileImagePath } = req.body;
 
   try {
     const updated = await prisma.employee.update({
       where: { id }, // id เป็น string แล้ว
-      data: { name, position, phone }
+      data: { name, position, phone, email, profileImagePath }
     });
 
     res.json(updated);
