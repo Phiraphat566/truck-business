@@ -16,22 +16,35 @@ export class EmployeeComponent {
   showDeleteConfirm = false;
   deleteIndex: number | null = null;
   showToast = false;
+  toastMessage = '';
+  searchTerm: string = '';
+  selectedFilter: string = 'ทั้งหมด';
+  isLoading: boolean = false;
   confirmDelete(index: number) {
     this.deleteIndex = index;
     this.showDeleteConfirm = true;
   }
 
   deleteEmployee(index: number) {
-    this.employees.splice(index, 1);
-    this.showDeleteConfirm = false;
-    this.deleteIndex = null;
-    this.showToast = true;
+    this.isLoading = true;
+    
+    // Simulate API call with loading
     setTimeout(() => {
-      this.showToast = false;
-    }, 1800);
-    if (this.currentIndex >= this.employees.length) {
-      this.currentIndex = Math.max(0, this.employees.length - 1);
-    }
+      this.employees.splice(index, 1);
+      this.showDeleteConfirm = false;
+      this.deleteIndex = null;
+      this.isLoading = false;
+      this.toastMessage = 'ลบข้อมูลพนักงานเรียบร้อยแล้ว';
+      this.showToast = true;
+      
+      setTimeout(() => {
+        this.showToast = false;
+      }, 3000);
+      
+      if (this.currentIndex >= this.employees.length) {
+        this.currentIndex = Math.max(0, this.employees.length - 1);
+      }
+    }, 500);
   }
   // ...existing code...
 
@@ -61,28 +74,28 @@ export class EmployeeComponent {
       id: 'ED002',
       firstName: 'ไกรทอง',
       lastName: 'พยองเดช',
-      position: 'คนขับสิบล้อ',
+      position: 'คนขับรถสิบล้อ',
       imageUrl: 'assets/tinky.png'
     },
     {
       id: 'ED003',
       firstName: 'ม่วง',
       lastName: 'เมี๊ยว',
-      position: 'คนขับสิบล้อ',
+      position: 'คนขับรถสิบล้อ',
       imageUrl: 'assets/lala.png'
     },
     {
       id: 'ED004',
       firstName: 'เฉ',
       lastName: 'โป',
-      position: 'คนขับสิบล้อ',
+      position: 'คนขับรถสิบล้อ',
       imageUrl: 'assets/po.png'
     },
     {
       id: 'ED005',
       firstName: 'โชคชัย',
       lastName: 'มีวัว',
-      position: 'คนขับสิบล้อ',
+      position: 'คนขับรถสิบล้อ',
       imageUrl: 'assets/dipsy.png'
     },
     {
@@ -140,18 +153,73 @@ export class EmployeeComponent {
   }
 
   submitForm() {
-    if (this.editingMode) {
-      this.employees[this.currentIndex] = { ...this.form };
-    } else {
-      this.employees.push({ ...this.form });
-      this.currentIndex = this.employees.length - 1;
+    this.isLoading = true;
+    
+    // Simulate API call
+    setTimeout(() => {
+      if (this.editingMode) {
+        this.employees[this.currentIndex] = { ...this.form };
+        this.toastMessage = 'แก้ไขข้อมูลพนักงานเรียบร้อยแล้ว';
+      } else {
+        this.employees.push({ ...this.form });
+        this.currentIndex = this.employees.length - 1;
+        this.toastMessage = 'เพิ่มพนักงานใหม่เรียบร้อยแล้ว';
+      }
+      
+      this.isLoading = false;
+      this.closePopup();
+      
+      // Show success feedback
+      this.showToast = true;
+      setTimeout(() => {
+        this.showToast = false;
+      }, 3000);
+    }, 800);
+  }
+
+  // Filter employees based on search term and filter
+  get filteredEmployees() {
+    let filtered = this.employees;
+    
+    // Apply position filter
+    if (this.selectedFilter !== 'ทั้งหมด') {
+      filtered = filtered.filter(emp => 
+        emp.position?.toLowerCase().includes(this.selectedFilter.toLowerCase())
+      );
     }
-    this.closePopup();
+    
+    // Apply search filter
+    if (this.searchTerm) {
+      filtered = filtered.filter(emp => 
+        emp.firstName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        emp.lastName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        emp.id?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        emp.position?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        emp.email?.toLowerCase().includes(this.searchTerm.toLowerCase())
+      );
+    }
+    
+    return filtered;
+  }
+
+  // Export to Excel functionality
+  exportToExcel() {
+    // This would typically integrate with a library like xlsx
+    console.log('Exporting employee data to Excel...');
+    // Implementation would go here
   }
 
   showDetail(emp: any) {
     this.selectedEmployee = emp;
     this.showDetailPopup = true;
+  }
+
+  editSelectedEmployee() {
+    const index = this.employees.findIndex(emp => emp === this.selectedEmployee);
+    if (index !== -1) {
+      this.openEditPopupFor(index);
+      this.closeDetailPopup();
+    }
   }
 
   closeDetailPopup() {

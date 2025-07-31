@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { NgIf, NgFor } from '@angular/common';
+import { NgIf, NgFor, NgClass, CommonModule } from '@angular/common';
 import { NgChartsModule } from 'ng2-charts';
 import {
   ChartConfiguration,
@@ -14,7 +14,7 @@ import {
   selector: 'app-income',
   templateUrl: './income.component.html',
   styleUrls: ['./income.component.css'],
-  imports: [RouterModule, NgIf, NgFor, NgChartsModule],
+  imports: [RouterModule, NgIf, NgFor, NgClass, CommonModule, NgChartsModule],
 })
 export class IncomeComponent {
   summary = {
@@ -51,29 +51,69 @@ export class IncomeComponent {
 
   chartType: 'line' = 'line'; // ✅ แก้ให้ type เป็น literal
 
+  // Pie Chart Data
+  pieChartData: ChartData<'pie'> = {
+    labels: ['ขนส่งสินค้า', 'บริการพิเศษ', 'อื่นๆ'],
+    datasets: [
+      {
+        data: [65, 25, 10],
+        backgroundColor: [
+          '#3b82f6', // Blue
+          '#10b981', // Green
+          '#f59e0b', // Amber
+        ],
+        borderColor: [
+          '#1d4ed8',
+          '#059669',
+          '#d97706',
+        ],
+        borderWidth: 2,
+      },
+    ],
+  };
+
+  pieChartOptions: ChartConfiguration<'pie'>['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false, // We'll use custom legend
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            return context.label + ': ' + context.parsed + '%';
+          }
+        }
+      }
+    },
+  };
+
+  pieChartType: 'pie' = 'pie';
+
   incomeList = [
     {
       date: '31 ก.ค. 2025',
       title: 'งานบดดิน 5 ไร่',
-      category: 'งานถมที่',
+      category: 'ขนส่ง',
       amount: 80000,
     },
     {
       date: '30 ก.ค. 2025',
       title: 'ขนดินโครงการบ้านจัดสรร',
-      category: 'ขนส่งดิน',
+      category: 'ขนส่ง',
       amount: 65000,
     },
     {
       date: '29 ก.ค. 2025',
       title: 'ถมลานจอดรถ 3 ไร่',
-      category: 'งานถมที่',
+      category: 'บริการ',
       amount: 72000,
     },
     {
       date: '28 ก.ค. 2025',
       title: 'ขนดินอาไถ่งาน A',
-      category: 'ขนส่งดิน',
+      category: 'อื่นๆ',
       amount: 60000,
     },
   ];

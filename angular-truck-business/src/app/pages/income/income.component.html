@@ -1,88 +1,283 @@
 
-<!-- income.component.html -->
-
-<div class="w-full min-h-screen bg-gray-300 flex flex-col items-center py-8">
-  <!-- หัวเรื่อง -->
-  <div class="w-[90%] max-w-4xl mx-auto mb-8">
-    <div class="bg-gray-500 rounded-xl px-6 py-3 flex justify-center items-center">
-      <h1 class="text-2xl font-bold text-center text-white">income(รายได้)</h1>
+<!-- Modern Income Dashboard -->
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+  <!-- Header Section -->
+  <div class="mb-8">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">รายได้และผลกำไร</h1>
+        <p class="text-gray-600">สรุปรายได้และกำไรของธุรกิจขนส่ง</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+          <i class="ni ni-archive-2 mr-2"></i>
+          ส่งออกรายงาน
+        </button>
+        <button class="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-lg">
+          <i class="ni ni-fat-add mr-2"></i>
+          เพิ่มรายได้
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- กล่องรวมรายได้และกราฟ -->
-  <div class="w-[90%] max-w-4xl mx-auto mb-8 bg-gray-700 rounded-3xl flex flex-col items-center py-8 px-4">
-    <div class="w-full flex flex-col gap-4 mb-4 md:flex-row md:gap-6 justify-center">
-      <div class="flex-1 bg-white rounded-xl shadow flex flex-col items-center py-4 px-2 mx-1">
-        <div class="flex items-center gap-2 mb-1">
-          <span class="bg-blue-100 rounded-full p-2"><i class="ni ni-money-coins text-blue-600 text-xl"></i></span>
-          <span class="text-xs text-gray-500">รายได้เงินปีนี้</span>
+  <!-- Income Statistics Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="group bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+      <div class="flex items-center justify-between mb-4">
+        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+          <i class="ni ni-money-coins text-white text-lg"></i>
         </div>
-        <span class="text-lg font-bold text-blue-600">฿65,000</span>
+        <span class="bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full">ปีนี้</span>
       </div>
-      <div class="flex-1 bg-white rounded-xl shadow flex flex-col items-center py-4 px-2 mx-1">
-        <div class="flex items-center gap-2 mb-1">
-          <span class="bg-blue-100 rounded-full p-2"><i class="ni ni-money-coins text-blue-600 text-xl"></i></span>
-          <span class="text-xs text-gray-500">รายได้เดือนนี้</span>
-        </div>
-        <span class="text-lg font-bold text-blue-600">฿1,200,000</span>
-      </div>
-      <div class="flex-1 bg-white rounded-xl shadow flex flex-col items-center py-4 px-2 mx-1">
-        <div class="flex items-center gap-2 mb-1">
-          <span class="bg-blue-100 rounded-full p-2"><i class="ni ni-money-coins text-blue-600 text-xl"></i></span>
-          <span class="text-xs text-gray-500">รายได้ปีนี้</span>
-        </div>
-        <span class="text-lg font-bold text-blue-600">฿14,250,000</span>
-      </div>
-      <div class="flex-1 bg-white rounded-xl shadow flex flex-col items-center py-4 px-2 mx-1">
-        <div class="flex items-center gap-2 mb-1">
-          <span class="bg-blue-100 rounded-full p-2"><i class="ni ni-music-2 text-blue-600 text-xl"></i></span>
-          <span class="text-xs text-gray-500">รายได้เฉลี่ยต่อวัน</span>
-        </div>
-        <span class="text-lg font-bold text-blue-600">฿48,500</span>
-      </div>
+      <p class="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">รายได้รวมปีนี้</p>
+      <h3 class="text-2xl font-bold text-gray-900">฿14,250,000</h3>
+      <p class="text-xs text-blue-600 mt-2">เพิ่มขึ้น 15% จากปีที่แล้ว</p>
     </div>
-    <div class="w-full bg-white rounded-2xl shadow p-6 flex flex-col items-center">
-      <canvas baseChart
-              [data]="chartLineData"
-              [options]="chartOptions"
-              [type]="chartType"
-              class="w-full h-64">
-      </canvas>
+
+    <div class="group bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+      <div class="flex items-center justify-between mb-4">
+        <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+          <i class="ni ni-calendar-grid-58 text-white text-lg"></i>
+        </div>
+        <span class="bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-full">เดือนนี้</span>
+      </div>
+      <p class="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">รายได้เดือนนี้</p>
+      <h3 class="text-2xl font-bold text-gray-900">฿1,200,000</h3>
+      <p class="text-xs text-green-600 mt-2">เพิ่มขึ้น 8% จากเดือนที่แล้ว</p>
+    </div>
+
+    <div class="group bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+      <div class="flex items-center justify-between mb-4">
+        <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+          <i class="ni ni-chart-line text-white text-lg"></i>
+        </div>
+        <span class="bg-amber-100 text-amber-700 text-xs font-semibold px-2.5 py-1 rounded-full">เฉลี่ย</span>
+      </div>
+      <p class="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">รายได้เฉลี่ยต่อวัน</p>
+      <h3 class="text-2xl font-bold text-gray-900">฿48,500</h3>
+      <p class="text-xs text-amber-600 mt-2">คงที่จากสัปดาห์ที่แล้ว</p>
+    </div>
+
+    <div class="group bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+      <div class="flex items-center justify-between mb-4">
+        <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+          <i class="ni ni-chart-pie text-white text-lg"></i>
+        </div>
+        <span class="bg-purple-100 text-purple-700 text-xs font-semibold px-2.5 py-1 rounded-full">เป้าหมาย</span>
+      </div>
+      <p class="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">ความคืบหน้าเป้าหมาย</p>
+      <h3 class="text-2xl font-bold text-gray-900">85%</h3>
+      <p class="text-xs text-purple-600 mt-2">เหลืออีก 15% เพื่อบรรลุเป้าหมาย</p>
     </div>
   </div>
 
-  <!-- รายการรายรับ -->
-  <div class="w-[90%] max-w-4xl mx-auto mb-8 bg-gray-700 rounded-3xl flex flex-col items-center py-8 px-4">
-    <div class="w-full bg-white rounded-2xl shadow p-6">
-      <table class="w-full table-auto">
-        <thead>
-          <tr class="border-b text-left">
-            <th class="py-2">วันที่</th>
-            <th class="py-2">รายการ</th>
-            <th class="py-2">หมวดหมู่</th>
-            <th class="py-2">รายได้</th>
-            <th class="py-2">หมายเหตุ</th>
+  <!-- Charts and Analysis Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <!-- Income Trend Chart -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h3 class="text-xl font-bold text-gray-900">แนวโน้มรายได้</h3>
+          <p class="text-sm text-gray-500 mt-1">รายได้ 12 เดือนที่ผ่านมา</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="px-3 py-1.5 bg-blue-50 text-blue-600 text-xs font-medium rounded-lg hover:bg-blue-100 transition-colors">
+            เดือน
+          </button>
+          <button class="px-3 py-1.5 text-gray-500 text-xs font-medium rounded-lg hover:bg-gray-50 transition-colors">
+            ปี
+          </button>
+        </div>
+      </div>
+      <div class="h-64">
+        <canvas baseChart
+                [data]="chartLineData"
+                [options]="chartOptions"
+                [type]="chartType"
+                class="w-full h-full">
+        </canvas>
+      </div>
+    </div>
+
+    <!-- Revenue Breakdown -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h3 class="text-xl font-bold text-gray-900">แยกตามประเภทรายได้</h3>
+          <p class="text-sm text-gray-500 mt-1">สัดส่วนรายได้เดือนนี้</p>
+        </div>
+        <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+      </div>
+      <div class="h-64 flex items-center justify-center">
+        <canvas baseChart
+                [data]="pieChartData"
+                [options]="pieChartOptions"
+                [type]="pieChartType"
+                class="max-w-full max-h-full">
+        </canvas>
+      </div>
+      <div class="mt-4 space-y-2">
+        <div class="flex items-center justify-between text-sm">
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+            <span class="text-gray-600">ขนส่งสินค้า</span>
+          </div>
+          <span class="font-semibold text-gray-900">65%</span>
+        </div>
+        <div class="flex items-center justify-between text-sm">
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+            <span class="text-gray-600">บริการพิเศษ</span>
+          </div>
+          <span class="font-semibold text-gray-900">25%</span>
+        </div>
+        <div class="flex items-center justify-between text-sm">
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 bg-amber-500 rounded-full"></div>
+            <span class="text-gray-600">อื่นๆ</span>
+          </div>
+          <span class="font-semibold text-gray-900">10%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Income Table -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-xl font-bold text-gray-900">รายการรายรับ</h3>
+          <p class="text-sm text-gray-500 mt-1">ข้อมูลรายรับรายการ</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="relative">
+            <i class="ni ni-zoom-split-in absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+            <input type="text" placeholder="ค้นหารายการ..." 
+                   class="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          </div>
+          <button class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+            <i class="ni ni-fat-add text-sm"></i>
+            เพิ่มรายการ
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">วันที่</th>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">รายการ</th>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">หมวดหมู่</th>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">รายได้</th>
+            <th class="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">การดำเนินการ</th>
           </tr>
         </thead>
-        <tbody>
-          <tr *ngFor="let income of incomeList" class="border-b hover:bg-gray-50">
-            <td class="py-2">{{ income.date }}</td>
-            <td class="py-2">{{ income.title }}</td>
-            <td class="py-2">{{ income.category }}</td>
-            <td class="py-2">฿{{ income.amount }}</td>
-            <td class="py-2 text-blue-600 cursor-pointer" (click)="openPopup(income)">ดูรายละเอียด</td>
+        <tbody class="divide-y divide-gray-100">
+          <tr *ngFor="let income of incomeList; let i = index" 
+              class="hover:bg-gray-50 transition-colors group">
+            <td class="px-6 py-4 text-sm text-gray-900">{{ income.date }}</td>
+            <td class="px-6 py-4">
+              <div class="text-sm font-medium text-gray-900">{{ income.title }}</div>
+            </td>
+            <td class="px-6 py-4">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                    [ngClass]="{
+                      'bg-blue-100 text-blue-800': income.category === 'ขนส่ง',
+                      'bg-green-100 text-green-800': income.category === 'บริการ',
+                      'bg-amber-100 text-amber-800': income.category === 'อื่นๆ'
+                    }">
+                {{ income.category }}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-sm font-semibold text-green-600">฿{{ income.amount | number:'1.0-0' }}</td>
+            <td class="px-6 py-4 text-center">
+              <div class="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button (click)="openPopup(income)" 
+                        class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                  <i class="ni ni-single-02 text-sm"></i>
+                </button>
+                <button class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors">
+                  <i class="ni ni-ruler-pencil text-sm"></i>
+                </button>
+                <button class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                  <i class="ni ni-fat-remove text-sm"></i>
+                </button>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
+    
+    <!-- Empty State -->
+    <div *ngIf="incomeList.length === 0" class="text-center py-12">
+      <div class="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+        <i class="ni ni-money-coins text-3xl text-gray-400"></i>
+      </div>
+      <h3 class="text-lg font-medium text-gray-900 mb-2">ยังไม่มีรายการรายรับ</h3>
+      <p class="text-gray-500 mb-6">เริ่มต้นโดยการเพิ่มรายการรายรับแรกของคุณ</p>
+      <button class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
+        เพิ่มรายการแรก
+      </button>
+    </div>
   </div>
 
-  <!-- Popup รายละเอียด -->
-  <div *ngIf="popupVisible" class="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-    <div class="bg-white p-6 rounded-lg w-full max-w-md text-center">
-      <h2 class="text-xl font-bold mb-4">รายละเอียดรายรับ</h2>
-      <p class="text-gray-500">ยังไม่มีข้อมูลรายละเอียด</p>
-      <button (click)="closePopup()" class="mt-4 px-4 py-2 bg-gray-700 text-white rounded">ปิด</button>
+  <!-- Modern Popup รายละเอียด -->
+  <div *ngIf="popupVisible" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all">
+      <div class="px-6 py-4 border-b border-gray-100">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-bold text-gray-900">รายละเอียดรายรับ</h2>
+          <button (click)="closePopup()" 
+                  class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            <i class="ni ni-fat-remove text-lg"></i>
+          </button>
+        </div>
+      </div>
+      
+      <div class="p-6">
+        <div class="space-y-4">
+          <div class="flex items-center justify-center mb-6">
+            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center">
+              <i class="ni ni-money-coins text-white text-2xl"></i>
+            </div>
+          </div>
+          
+          <div class="text-center">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">ข้อมูลรายละเอียด</h3>
+            <p class="text-gray-500">ยังไม่มีข้อมูลรายละเอียดเพิ่มเติม</p>
+          </div>
+          
+          <div class="bg-gray-50 rounded-xl p-4 space-y-3">
+            <div class="flex justify-between">
+              <span class="text-sm text-gray-600">สถานะ:</span>
+              <span class="text-sm font-medium text-green-600">ยืนยันแล้ว</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-sm text-gray-600">วิธีการชำระ:</span>
+              <span class="text-sm font-medium text-gray-900">เงินสด</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-sm text-gray-600">อัปเดตล่าสุด:</span>
+              <span class="text-sm font-medium text-gray-900">วันนี้</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="px-6 py-4 bg-gray-50 rounded-b-2xl flex gap-3">
+        <button (click)="closePopup()" 
+                class="flex-1 px-4 py-2 text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-100 transition-colors">
+          ปิด
+        </button>
+        <button class="flex-1 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
+          แก้ไข
+        </button>
+      </div>
     </div>
   </div>
 </div>
