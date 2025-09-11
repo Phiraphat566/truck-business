@@ -9,6 +9,14 @@ html, body {
   padding: 0;
 }
 
+/* styles.css */
+@layer base {
+  html, body, app-root {
+    @apply min-h-screen bg-gray-100 dark:bg-zinc-950;
+  }
+}
+
+
 /* Global Blue Theme */
 :root {
   --primary-blue: #3b82f6;

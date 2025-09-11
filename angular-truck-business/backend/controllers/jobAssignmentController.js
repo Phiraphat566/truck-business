@@ -36,7 +36,7 @@ export const createJobAssignment = async (req, res) => {
       data: {
         id: newId,
         employeeId,
-        description, // ✅ ใช้ชื่อนี้แทน
+        description,
         assignedDate: new Date(assignedDate),
         status
       }
@@ -61,7 +61,7 @@ export const updateJobAssignment = async (req, res) => {
       where: { id },
       data: {
         employeeId,
-        description, // ต้องตรงกับชื่อฟิลด์ใน schema
+        description,
         assignedDate: new Date(assignedDate),
         status,
       },

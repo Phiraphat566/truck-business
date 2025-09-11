@@ -20,6 +20,6 @@ const routes: Routes = [
 
 @NgModule({
   imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule] // ✅ ต้อง export RouterModule เพื่อให้ module อื่นใช้ได้
+  exports: [RouterModule] //  ต้อง export RouterModule เพื่อให้ module อื่นใช้ได้
 })
 export class AppRoutingModule {}

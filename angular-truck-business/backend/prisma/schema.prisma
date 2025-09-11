@@ -7,31 +7,62 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Employee {
-  id             String           @id @map("employee_id")
-  name           String           @db.VarChar(255)
-  position       String           @db.VarChar(255)
-  phone          String           @db.VarChar(50)
-  email          String?          @db.VarChar(255)
-  profileImagePath String?        @map("profile_image_path") @db.VarChar(255)
-
-  Attendance     Attendance[]
-  EmployeeCall   EmployeeCall[]
-  JobAssignment  JobAssignment[]
-  MonthlySummary MonthlySummary[]
-  WorkLog        WorkLog[]
+enum DayStatus {
+  NOT_CHECKED_IN
+  WORKING
+  OFF_DUTY
+  ON_LEAVE
 }
 
+enum DaySource {
+  SYSTEM
+  ATTENDANCE
+  LEAVE
+  MANUAL
+}
+
+enum InvoiceStatus {
+  PENDING // ค้างชำระ
+  OVERDUE // เกินกำหนด
+  PAID // ชำระแล้ว
+}
+
+enum ArrivalStatus {
+  ON_TIME
+  LATE
+}
+
+model Employee {
+  id               String  @id @map("employee_id")
+  name             String  @db.VarChar(255)
+  position         String  @db.VarChar(255)
+  phone            String  @db.VarChar(50)
+  email            String? @db.VarChar(255)
+  profileImagePath String? @map("profile_image_path") @db.VarChar(255)
+
+  Attendance             Attendance[]
+  EmployeeCall           EmployeeCall[]
+  JobAssignment          JobAssignment[]
+  EmployeeMonthlySummary EmployeeMonthlySummary[]
+
+  EmployeeDayStatus EmployeeDayStatus[]
+  LeaveRequest      LeaveRequest[]
+}
 
 model Attendance {
-  id          String   @id @map("attendance_id")
-  employee_id String
-  check_in    DateTime @db.DateTime(0)
-  check_out   DateTime @db.DateTime(0)
-  Employee    Employee @relation(fields: [employee_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "Attendance_ibfk_1")
+  id            String        @id @map("attendance_id")
+  employee_id   String
+  work_date     DateTime      @db.Date        // วันที่ทำงาน
+  check_in      DateTime      @db.DateTime(0) // เวลาที่หัวหน้าใส่
+  check_out     DateTime?     @db.DateTime(0) // เวลาที่หัวหน้าใส่
+  status        ArrivalStatus // หัวหน้าเลือก ON_TIME หรือ LATE
 
-  @@index([employee_id], map: "employee_id")
+  Employee      Employee @relation(fields: [employee_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "Attendance_ibfk_1")
+
+  @@index([employee_id, work_date])
+  @@unique([employee_id, work_date], map: "uq_att_once_per_day")
 }
+
 
 model JobAssignment {
   id              String   @id @map("job_id")
@@ -45,24 +76,18 @@ model JobAssignment {
   @@index([employee_id], map: "employee_id")
 }
 
-model WorkLog {
-  id          Int      @id @default(autoincrement())
-  employee_id String
-  work_date   DateTime @db.Date
-  Employee    Employee @relation(fields: [employee_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "WorkLog_ibfk_1")
-
-  @@unique([employee_id, work_date], map: "employee_id")
-}
-
 model Truck {
-  id               String             @id @map("truck_id")
-  plate            String             @db.VarChar(50)
-  model            String?            @db.VarChar(100)
-  total_distance   Int?               @default(0)
-  FuelLog          FuelLog[]
-  Trip             Trip[]
-  TruckDistanceLog TruckDistanceLog[]
-  TruckExpense     TruckExpense[]
+  id                           String             @id @map("truck_id")
+  plate                        String             @db.VarChar(50)
+  model                        String?            @db.VarChar(100)
+  total_distance               Int?               @default(0)
+  fuel_efficiency_km_per_liter Decimal?           @db.Decimal(10, 2) // <-- เพิ่ม (เช่น 4.50 km/l)
+  FuelLog                      FuelLog[]
+  Trip                         Trip[]
+  TruckDistanceLog             TruckDistanceLog[]
+  TruckExpense                 TruckExpense[]
+
+  @@unique([plate], map: "uq_truck_plate")
 }
 
 model Trip {
@@ -70,25 +95,28 @@ model Trip {
   job_id           String
   truck_id         String
   distance_km      Int
-  fuel_used_liters Int
-  fuel_cost        Int
+  trip_date        DateTime      @db.Date
+  fuel_used_liters Decimal?      @db.Decimal(10, 2) // จะเก็บถ้าคุณอยากบันทึกเอง (หรือให้ระบบคำนวณให้ก็ได้)
   JobAssignment    JobAssignment @relation(fields: [job_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "Trip_ibfk_1")
   Truck            Truck         @relation(fields: [truck_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "Trip_ibfk_2")
 
   @@index([job_id], map: "job_id")
   @@index([truck_id], map: "truck_id")
+  @@index([trip_date], map: "idx_trip_date") // ใช้กราฟ/รายงานตามเดือน
 }
 
 model FuelLog {
-  id           Int      @id @default(autoincrement())
-  truck_id     String
-  fuel_date    DateTime @db.Date
-  round_number Int
-  liters       Int
-  cost         Decimal  @db.Decimal(10, 2)
-  Truck        Truck    @relation(fields: [truck_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FuelLog_ibfk_1")
+  id              Int      @id @default(autoincrement())
+  truck_id        String
+  fuel_date       DateTime @db.Date
+  round_number    Int
+  liters          Decimal  @db.Decimal(10, 2) // เปลี่ยนเป็น Decimal
+  cost            Decimal  @db.Decimal(12, 2)
+  price_per_liter Decimal? @db.Decimal(10, 2) // <-- เพิ่ม (ช่วยให้รายงานเร็ว)
+  Truck           Truck    @relation(fields: [truck_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FuelLog_ibfk_1")
 
   @@index([truck_id], map: "truck_id")
+  @@index([fuel_date], map: "idx_fuellog_date")
 }
 
 model TruckDistanceLog {
@@ -111,6 +139,7 @@ model TruckExpense {
   Truck        Truck    @relation(fields: [truck_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "TruckExpense_ibfk_1")
 
   @@index([truck_id], map: "truck_id")
+  @@index([expense_date], map: "idx_truckexpense_date")
 }
 
 model EmployeeCall {
@@ -124,34 +153,143 @@ model EmployeeCall {
   @@index([employee_id], map: "employee_id")
 }
 
-model MonthlySummary {
-  id              Int      @id @default(autoincrement())
-  employee_id     String
-  month           String   @db.VarChar(20)
-  total_trips     Int
-  total_fuel_cost Decimal  @db.Decimal(10, 2)
-  total_earnings  Decimal  @db.Decimal(10, 2)
-  salary          Decimal? @default(0.00) @db.Decimal(10, 2)
-  truck_expense   Decimal? @default(0.00) @db.Decimal(10, 2)
-  Employee        Employee @relation(fields: [employee_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "MonthlySummary_ibfk_1")
+model EmployeeMonthlySummary {
+  id           Int      @id @default(autoincrement())
+  employee_id  String
+  year         Int
+  month        Int // 1..12
+  planned_days Int      @default(0) // จำนวนวันที่มีกะ/ต้องทำงาน
+  present_days Int      @default(0) // มาทำงาน (มี attendance)
+  late_days    Int      @default(0) // มาสาย
+  absent_days  Int      @default(0) // ขาดงาน (ไม่มี attendance และไม่ได้ลา)
+  leave_days   Int      @default(0) // ลา
+  work_hours   Decimal? @db.Decimal(10, 2) // ชม.ทำงานรวม (ถ้าต้องใช้)
+  on_time_rate Decimal? @db.Decimal(5, 2) // % ตรงเวลา
 
-  @@index([employee_id], map: "employee_id")
+  Employee Employee @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+
+  @@unique([employee_id, year, month], map: "uq_employee_month")
+  @@index([year, month], map: "idx_empms_year_month")
+}
+
+model FinanceMonthlySummary {
+  id              Int     @id @default(autoincrement())
+  year            Int
+  month           Int
+  income_received Decimal @default(0) @db.Decimal(12, 2) // รวมเงิน “รับจริง” (Income.income_date)
+  expense_total   Decimal @default(0) @db.Decimal(12, 2) // FuelLog.cost + TruckExpense.amount (+ อื่นๆถ้ามี)
+  net_profit      Decimal @default(0) @db.Decimal(12, 2) // income_received - expense_total
+
+  invoice_paid_amount    Decimal @default(0) @db.Decimal(12, 2)
+  invoice_pending_amount Decimal @default(0) @db.Decimal(12, 2)
+  invoice_overdue_amount Decimal @default(0) @db.Decimal(12, 2)
+  invoice_count          Int     @default(0)
+  paid_count             Int     @default(0)
+  pending_count          Int     @default(0)
+  overdue_count          Int     @default(0)
+
+  updated_at DateTime @default(now()) @db.DateTime(0)
+
+  @@unique([year, month], map: "uq_finance_month")
 }
 
 model TravelCost {
-  id           Int     @id @default(autoincrement())
-  min_distance Int
-  max_distance Int?
-  rate_baht    Decimal @db.Decimal(10, 2)
+  id              Int       @id @default(autoincrement())
+  min_km          Int
+  max_km          Int? // null = ไร้เพดาน
+  price_per_round Decimal   @db.Decimal(10, 2) // ราคา/รอบ ตามช่วงนี้
+  effective_from  DateTime  @db.Date // วันเริ่มใช้กติกา
+  effective_to    DateTime? @db.Date // null = ใช้ต่อเนื่อง
+  is_active       Boolean   @default(true)
+  note            String?   @db.VarChar(255)
+
+  @@index([effective_from, effective_to])
+  @@index([min_km, max_km])
 }
 
 model Income {
   id                  Int      @id @default(autoincrement())
-  income_date         DateTime @db.Date               @map("income_date")
+  income_date         DateTime @map("income_date") @db.Date // วันที่ "รับเงินจริง"
   description         String   @db.Text
   category            String   @db.VarChar(100)
-  amount              Decimal  @db.Decimal(10, 2)
-  contract_image_path String?  @db.VarChar(255)       @map("contract_image_path")
-  created_at          DateTime @default(now())        @map("created_at") @db.DateTime(0)
+  amount              Decimal  @db.Decimal(12, 2)
+  contract_image_path String?  @map("contract_image_path") @db.VarChar(255)
+  created_at          DateTime @default(now()) @map("created_at") @db.DateTime(0)
 
+  // ผูกกับ invoice ที่จ่ายแล้ว (ถ้ามาจากใบแจ้งหนี้)
+  invoiceId Int?     @unique
+  invoice   Invoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+
+  @@index([income_date], map: "idx_income_date")
 }
+
+model Invoice {
+  id           Int           @id @default(autoincrement())
+  invoiceNo    String        @unique @db.VarChar(50) // เลขที่เอกสาร เช่น 202501-1006
+  customerName String        @db.VarChar(255) // ยังไม่ทำตารางลูกค้า แยกเป็นชื่อก่อน
+  contractDate DateTime      @db.Date // วันที่ทำสัญญา
+  dueDate      DateTime      @db.Date // วันครบกำหนด
+  amount       Decimal       @db.Decimal(12, 2)
+  description  String?       @db.Text
+  status       InvoiceStatus @default(PENDING) // เก็บไว้ เพื่อให้ฟิลเตอร์เร็ว
+  paidAt       DateTime?     @db.Date // วันที่จ่ายจริง (ถ้าจ่ายแล้ว)
+  createdAt    DateTime      @default(now()) @db.DateTime(0)
+
+  // สัมพันธ์กับ Income: 1 ใบแจ้งหนี้ = 0..1 รายการรับเงิน (จ่ายครั้งเดียว)
+  income Income?
+
+  @@index([contractDate, status], map: "idx_invoice_contract_status")
+  @@index([dueDate, status], map: "idx_invoice_due_status")
+}
+
+model Staff {
+  staff_id           Int      @id @default(autoincrement())
+  username           String   @unique @db.VarChar(100)
+  password_hash      String   @db.VarChar(255)
+  name               String?  @db.VarChar(255)
+  role               String   @default("staff") @db.VarChar(50)
+  profile_image_path String?  @db.VarChar(255)
+  created_at         DateTime @default(now()) @db.DateTime(0)
+
+  // relations (optional แต่ดีต่อการอ่าน)
+
+  leaveRequests LeaveRequest[]
+}
+
+model EmployeeDayStatus {
+  employee_id String
+  work_date   DateTime  @db.Date
+  status      DayStatus
+  updated_at  DateTime  @default(now()) @db.DateTime(0)
+  Employee    Employee  @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+
+  @@id([employee_id, work_date])
+  @@index([status])
+  @@index([work_date], map: "idx_eds_work_date")
+}
+
+model LeaveRequest {
+  leave_id    Int      @id @default(autoincrement())
+  employee_id String
+  leave_date  DateTime @db.Date
+  leave_type  String   @db.VarChar(20) // SICK | PERSONAL | VACATION | OTHER
+  reason      String?  @db.Text
+  approved_by Int
+  approved_at DateTime @default(now()) @db.DateTime(0)
+  created_at  DateTime @default(now()) @db.DateTime(0)
+
+  Employee Employee @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+  Staff    Staff    @relation(fields: [approved_by], references: [staff_id])
+
+  @@unique([employee_id, leave_date])
+  @@index([employee_id, leave_date])
+}
+
+
+model WorkYear {
+  year       Int      @id
+  created_at DateTime @default(now()) @db.DateTime(0)
+
+  @@map("WorkYear") // จะใส่หรือไม่ใส่ก็ได้ แค่ทำให้ชื่อ table ชัด
+}
+

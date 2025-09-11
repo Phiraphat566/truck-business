@@ -1,5 +1,87 @@
 import { PrismaClient } from '@prisma/client';
+import fs from 'fs';
+import path from 'path';
 const prisma = new PrismaClient();
+
+
+function safeUnlink(filePath) {
+  if (!filePath) return;
+  const localPath = filePath.startsWith('/uploads')
+    ? filePath.slice(1)
+    : filePath;
+  try {
+    if (fs.existsSync(localPath)) fs.unlinkSync(localPath);
+  } catch (_) {}
+}
+
+// POST /api/employees/:id/photo  (ใช้ร่วมกับ upload middleware .single('image'))
+// อัปโหลดรูปโปรไฟล์พนักงาน
+export const uploadEmployeePhoto = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'กรุณาอัปโหลดไฟล์รูปในฟิลด์ "image"' });
+    }
+
+    // หา employee
+    const employee = await prisma.employee.findUnique({ where: { id } });
+    if (!employee) {
+      // ลบไฟล์ที่เพิ่งอัปถ้าไม่พบ employee
+      safeUnlink(req.file.path);
+      return res.status(404).json({ message: 'ไม่พบพนักงาน' });
+    }
+
+    // path สำหรับเสิร์ฟสาธารณะ (app.use('/uploads', express.static('uploads')))
+    const publicPath = `/uploads/employees/${path.basename(req.file.path)}`;
+
+    // ลบรูปเก่า (ถ้ามี)
+    if (employee.profileImagePath && employee.profileImagePath !== publicPath) {
+      safeUnlink(employee.profileImagePath);
+    }
+
+    const updated = await prisma.employee.update({
+      where: { id },
+      data: { profileImagePath: publicPath },
+      select: { id: true, name: true, profileImagePath: true },
+    });
+
+    return res.status(200).json({
+      message: 'อัปโหลดรูปโปรไฟล์เรียบร้อย',
+      data: updated,
+    });
+  } catch (err) {
+    if (req.file?.path) safeUnlink(req.file.path);
+    console.error(err);
+    return res.status(500).json({ message: 'อัปโหลดรูปไม่สำเร็จ', error: err.message });
+  }
+};
+
+// ลบรูปโปรไฟล์พนักงาน
+// DELETE /api/employees/:id/photo
+export const deleteEmployeePhoto = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const emp = await prisma.employee.findUnique({ where: { id } });
+    if (!emp) return res.status(404).json({ message: 'ไม่พบพนักงาน' });
+
+    if (emp.profileImagePath) {
+      safeUnlink(emp.profileImagePath);
+    }
+
+    await prisma.employee.update({
+      where: { id },
+      data: { profileImagePath: null },
+    });
+
+    return res.status(200).json({ message: 'ลบรูปโปรไฟล์เรียบร้อย' });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: 'ลบรูปไม่สำเร็จ', error: err.message });
+  }
+};
+
 
 //  ดึงพนักงานทั้งหมด
 export const getAllEmployees = async (req, res) => {
@@ -27,23 +109,18 @@ export const getEmployeeSummary = async (req, res) => {
 
   try {
     const employee = await prisma.employee.findUnique({
-      where: { id }, //  ใช้ String
+      where: { id },
       include: {
-        attendances: {
-          select: {
-            date: true,
-            checkIn: true,
-            checkOut: true,
-          },
-          orderBy: { date: 'desc' },
+        Attendance: {
+          select: { check_in: true, check_out: true },
+          orderBy: { check_in: 'desc' },
         },
-        jobAssignments: {
+        JobAssignment: {
           include: {
-            trips: {
+            Trip: {
               select: {
-                distanceKM: true,
-                fuelUsedLiters: true,
-                fuelCost: true,
+                distance_km: true,
+                fuel_used_liters: true,
               },
             },
           },
@@ -57,13 +134,11 @@ export const getEmployeeSummary = async (req, res) => {
 
     let totalTrips = 0;
     let totalDistance = 0;
-    let totalFuelCost = 0;
-
-    employee.jobAssignments.forEach(job => {
-      totalTrips += job.trips.length;
-      job.trips.forEach(trip => {
-        totalDistance += trip.distanceKM;
-        totalFuelCost += trip.fuelCost;
+    // NOTE: ยังไม่คำนวณค่าเชื้อเพลิง เพราะ schema ไม่มี fuelCost ใน Trip
+    employee.JobAssignment.forEach(job => {
+      totalTrips += job.Trip.length;
+      job.Trip.forEach(trip => {
+        totalDistance += trip.distance_km || 0;
       });
     });
 
@@ -76,14 +151,14 @@ export const getEmployeeSummary = async (req, res) => {
       profileImagePath: employee.profileImagePath,
       totalTrips,
       totalDistance,
-      totalFuelCost,
-      attendances: employee.attendances,
+      attendances: employee.Attendance,
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
 
 
 // เพิ่มพนักงานใหม่
@@ -130,17 +205,16 @@ export const createEmployee = async (req, res) => {
 
 
 
-
-
 // ลบพนักงาน
 export const deleteEmployee = async (req, res) => {
   const { id } = req.params;
-
   try {
-    await prisma.employee.delete({
-      where: { id } //  ใช้ String
-    });
+    const emp = await prisma.employee.findUnique({ where: { id } });
+    if (!emp) return res.status(404).json({ error: 'Employee not found' });
 
+    if (emp.profileImagePath) safeUnlink(emp.profileImagePath);
+
+    await prisma.employee.delete({ where: { id } });
     res.json({ message: 'Employee deleted successfully' });
   } catch (error) {
     console.error(error);
@@ -148,15 +222,17 @@ export const deleteEmployee = async (req, res) => {
   }
 };
 
+
+
 //  แก้ไขพนักงาน
 export const updateEmployee = async (req, res) => {
   const { id } = req.params;
-  const { name, position, phone, email, profileImagePath } = req.body;
+  const { name, position, phone, email } = req.body;
 
   try {
     const updated = await prisma.employee.update({
       where: { id }, // id เป็น string แล้ว
-      data: { name, position, phone, email, profileImagePath }
+      data: { name, position, phone, email }
     });
 
     res.json(updated);

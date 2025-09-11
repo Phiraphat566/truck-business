@@ -13,6 +13,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
+
             "outputPath": "dist/angular-truck-business",
             "index": "src/index.html",
             "main": "src/main.ts",
@@ -71,7 +72,8 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "angular-truck-business:build"
+            "browserTarget": "angular-truck-business:build",
+            "proxyConfig": "proxy.conf.json"
           }
         },
         "test": {

@@ -1,0 +1,278 @@
+  -- สร้างฐานข้อมูล
+  CREATE DATABASE IF NOT EXISTS truckdb CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+  USE truckdb;
+
+  -- เจ้าหนที่ฐานข้อมูล
+  CREATE TABLE Staff (
+    staff_id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    name VARCHAR(255),
+    role VARCHAR(50) DEFAULT 'staff',
+    profile_image_path VARCHAR(255), 
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  INSERT INTO Staff (username, password_hash, name, role, profile_image_path)
+  VALUES 
+  ('admin01', '$2b$10$qwertyuiopASDFGHJKLZXCVBNM1234567890abcd', 'คุณปรีชา', 'admin', 'uploads/staff/admin01.jpg'),
+  ('staff01', '$2b$10$0987654321poiuytrewqlkjhgfdsamnbvcxz3210', 'คุณสายใจ', 'staff', 'uploads/staff/staff01.jpg');
+
+
+  -- ตารางพนักงาน 
+  CREATE TABLE Employee (
+    employee_id VARCHAR(191) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    position VARCHAR(255) NOT NULL,
+    phone VARCHAR(50) NOT NULL,
+    email VARCHAR(255),                 
+    profile_image_path VARCHAR(255)   
+  );
+
+  -- เพิ่มข้อมูลตัวอย่าง 
+  INSERT INTO Employee (employee_id, name, position, phone, email, profile_image_path) VALUES
+  ('EMP001', 'สมชาย ขยันดี', 'คนขับ', '0812345678', 'somchai@smarttruck.co.th', 'uploads/employees/emp001.jpg'),
+  ('EMP002', 'สายใจ ทองมา', 'ผู้ช่วยคนขับ', '0823456789', 'saijai@smarttruck.co.th', 'uploads/employees/emp002.jpg');
+
+
+  -- ตารางการเข้างาน
+ CREATE TABLE Attendance (
+  attendance_id VARCHAR(191) PRIMARY KEY,
+  employee_id   VARCHAR(191) NOT NULL,
+  check_in      DATETIME     NOT NULL,
+  check_out     DATETIME     NULL,            -- <- ให้เป็น NULL ได้
+  CONSTRAINT fk_att_employee
+    FOREIGN KEY (employee_id) REFERENCES Employee(employee_id) ON DELETE CASCADE
+);
+
+-- (แนะนำ) ทำดัชนีเพื่อค้นหาเร็วขึ้น
+CREATE INDEX idx_att_employee_date ON Attendance (employee_id, check_in);
+
+  INSERT INTO Attendance VALUES
+  ('ATT001', 'EMP001', '2025-07-16 08:00:00', '2025-07-16 17:00:00'),
+  ('ATT002', 'EMP001', '2025-07-17 08:05:00', '2025-07-17 17:10:00'),
+  ('ATT003', 'EMP002', '2025-07-17 07:55:00', '2025-07-17 17:00:00');
+
+  -- ตารางการมอบหมายงาน
+  CREATE TABLE JobAssignment (
+    job_id VARCHAR(191) PRIMARY KEY,
+    employee_id VARCHAR(191) NOT NULL,
+    job_description TEXT NOT NULL,
+    assigned_date DATETIME NOT NULL,
+    status VARCHAR(100) NOT NULL,
+    FOREIGN KEY (employee_id) REFERENCES Employee(employee_id) ON DELETE CASCADE
+  );
+
+  INSERT INTO JobAssignment VALUES
+  ('JOB001', 'EMP001', 'ขนดินไซต์ A ไปไซต์ B', '2025-07-16 08:30:00', 'เสร็จสิ้น'),
+  ('JOB002', 'EMP001', 'ขนดินไซต์ B ไปไซต์ C', '2025-07-17 09:00:00', 'กำลังดำเนินการ');
+
+  CREATE TABLE WorkLog (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id VARCHAR(191) NOT NULL,
+    work_date DATE NOT NULL,
+    FOREIGN KEY (employee_id) REFERENCES Employee(employee_id) ON DELETE CASCADE,
+    UNIQUE (employee_id, work_date) -- ป้องกันบันทึกซ้ำวันเดิม
+  );
+
+  INSERT INTO WorkLog (employee_id, work_date) VALUES
+  ('EMP001', '2025-07-16'),
+  ('EMP001', '2025-07-17'),
+  ('EMP002', '2025-07-17');
+
+  -- ตารางรถบรรทุก
+  CREATE TABLE Truck (
+    truck_id VARCHAR(191) PRIMARY KEY,
+    plate VARCHAR(50) NOT NULL,
+    model VARCHAR(100),
+    total_distance INT DEFAULT 0
+  );
+
+
+  INSERT INTO Truck (truck_id, plate, model, total_distance) VALUES
+  ('TRUCK001', 'กข1234', 'Isuzu N-Series', 0),
+  ('TRUCK002', 'ขค5678', 'Hino 500 Series', 0);
+
+
+  -- ตารางรายได้
+  CREATE TABLE Income (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    income_date DATE NOT NULL,               
+    description TEXT NOT NULL,             
+    category VARCHAR(100) NOT NULL,          
+    amount DECIMAL(10,2) NOT NULL,           
+    contract_image_path VARCHAR(255),         
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  INSERT INTO Income (income_date, description, category, amount, contract_image_path)
+  VALUES
+  ('2025-07-31', 'งานลบดิน 5 ไร่', 'งานลบดิน', 80000.00, 'uploads/contracts/income_20250731_1.jpg'),
+  ('2025-07-30', 'ขนดินโครงการบ้านจัดสรร', 'ขนส่งดิน', 65000.00, 'uploads/contracts/income_20250730_1.jpg'),
+  ('2025-07-29', 'ถมลานจอดรถ 3 ไร่', 'งานลบดิน', 72000.00, 'uploads/contracts/income_20250729_1.jpg'),
+  ('2025-07-28', 'ขนดินอาโฮ่ยดั่งงาน A', 'ขนส่งดิน', 60000.00, 'uploads/contracts/income_20250728_1.jpg');
+
+
+
+  -- ตารางน้ำมันรถ
+  CREATE TABLE FuelLog (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    truck_id VARCHAR(191) NOT NULL,
+    fuel_date DATE NOT NULL,
+    round_number INT NOT NULL,
+    liters INT NOT NULL,
+    cost DECIMAL(10,2) NOT NULL,
+    receipt_image_path VARCHAR(255),
+    FOREIGN KEY (truck_id) REFERENCES Truck(truck_id) ON DELETE CASCADE
+  );  
+
+  INSERT INTO FuelLog (truck_id, fuel_date, round_number, liters, cost, receipt_image_path) VALUES
+  ('TRUCK001', '2025-07-01', 1, 40, 1200.00, 'uploads/fuel_receipts/truck001_20250701_1.jpg'),
+  ('TRUCK001', '2025-07-15', 2, 35, 1050.00, 'uploads/fuel_receipts/truck001_20250715_2.jpg'),
+  ('TRUCK002', '2025-07-03', 1, 50, 1500.00, 'uploads/fuel_receipts/truck002_20250703_1.jpg');
+
+
+  -- ตารางข้อมูลเที่ยวรถ
+  CREATE TABLE Trip (
+    trip_id VARCHAR(191) PRIMARY KEY,
+    job_id VARCHAR(191) NOT NULL,
+    truck_id VARCHAR(191) NOT NULL,
+    distance_km INT NOT NULL,
+    fuel_used_liters INT NOT NULL,
+    fuel_cost INT NOT NULL,
+    FOREIGN KEY (job_id) REFERENCES JobAssignment(job_id) ON DELETE CASCADE,
+    FOREIGN KEY (truck_id) REFERENCES Truck(truck_id) ON DELETE CASCADE
+  );
+
+  INSERT INTO Trip VALUES
+  ('TRIP001', 'JOB001', 'TRUCK001', 12, 10, 400),
+  ('TRIP002', 'JOB001', 'TRUCK001', 13, 11, 420),
+  ('TRIP003', 'JOB002', 'TRUCK002', 18, 15, 600);
+
+  -- ตารางอัตราค่าระยะทาง
+  CREATE TABLE TravelCost (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    min_distance INT NOT NULL,
+    max_distance INT,
+    rate_baht DECIMAL(10,2) NOT NULL
+  );
+
+  INSERT INTO TravelCost (min_distance, max_distance, rate_baht) VALUES
+  (0, 10, 100.00),
+  (11, 20, 150.00),
+  (21, NULL, 200.00);
+
+
+  -- ตารางค่าใช้จ่ายพนักงาน
+  CREATE TABLE EmployeeExpense (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    trip_id VARCHAR(191) NOT NULL,
+    employee_id VARCHAR(191) NOT NULL,
+    expense_date DATE NOT NULL, 
+    description TEXT,
+    amount DECIMAL(10,2) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (trip_id) REFERENCES Trip(trip_id) ON DELETE CASCADE,
+    FOREIGN KEY (employee_id) REFERENCES Employee(employee_id) ON DELETE CASCADE
+  );
+
+  INSERT INTO EmployeeExpense (trip_id, employee_id, expense_date, description, amount)
+  VALUES
+  ('TRIP001', 'EMP001', '2025-07-16', 'ค่าแรงรอบที่ 1', 200.00),
+  ('TRIP002', 'EMP001', '2025-07-16', 'ค่าแรงรอบที่ 2', 250.00),
+  ('TRIP003', 'EMP002', '2025-07-17', 'ค่าแรงรอบที่ 3', 180.00);
+
+
+  -- ตารางสรุปรายเดือน
+  CREATE TABLE MonthlySummary (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    employee_id VARCHAR(191) NOT NULL,
+    month VARCHAR(20) NOT NULL,
+    total_trips INT NOT NULL,
+    total_fuel_cost DECIMAL(10,2) NOT NULL,
+    total_earnings DECIMAL(10,2) NOT NULL,
+    salary DECIMAL(10,2) DEFAULT 0,
+    truck_expense DECIMAL(10,2) DEFAULT 0,
+    employee_expense DECIMAL(10,2) DEFAULT 0,  
+    FOREIGN KEY (employee_id) REFERENCES Employee(employee_id) ON DELETE CASCADE
+  );
+
+
+  INSERT INTO MonthlySummary (employee_id, month, total_trips, total_fuel_cost,total_earnings, salary, truck_expense, employee_expense) VALUES
+  ('EMP001', '2025-07', 2, 1800.00, 800.00, 15000.00, 1500.00, 450.00),
+  ('EMP002', '2025-07', 1, 600.00, 400.00, 12000.00, 2000.00, 180.00);
+
+
+  -- ตารางบันทึกระยะทางต่อรอบของรถ
+  CREATE TABLE TruckDistanceLog (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    truck_id VARCHAR(191) NOT NULL,
+    log_date DATE NOT NULL,
+    round_number INT NOT NULL,
+    distance_km INT NOT NULL,
+    FOREIGN KEY (truck_id) REFERENCES Truck(truck_id) ON DELETE CASCADE
+  );
+
+  INSERT INTO TruckDistanceLog (truck_id, log_date, round_number, distance_km) VALUES
+  ('TRUCK001', '2025-07-16', 1, 12),
+  ('TRUCK001', '2025-07-16', 2, 13),
+  ('TRUCK002', '2025-07-17', 1, 18);
+
+
+  CREATE TABLE TruckExpense (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    truck_id VARCHAR(191) NOT NULL,
+    expense_date DATE NOT NULL,
+    description TEXT,
+    amount DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (truck_id) REFERENCES Truck(truck_id) ON DELETE CASCADE
+  );
+
+  INSERT INTO TruckExpense (truck_id, expense_date, description, amount) VALUES
+  ('TRUCK001', '2025-07-16', 'ค่าซ่อมบำรุง', 1500.00),
+  ('TRUCK002', '2025-07-17', 'ค่าซ่อมบำรุง', 2000.00);
+
+  CREATE TABLE EmployeeCall (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id VARCHAR(191) NOT NULL,
+    call_date DATE NOT NULL,
+    message TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES Employee(employee_id) ON DELETE CASCADE
+  );
+
+  INSERT INTO EmployeeCall (employee_id, call_date, message) VALUES
+  ('EMP001', '2025-07-16', 'แจ้งงานขนดินไซต์ A ไปไซต์ B'),
+  ('EMP002', '2025-07-17', 'แจ้งงานขนดินไซต์ B ไปไซต์ C');
+
+
+  -- ตารางสถานะรายวัน
+CREATE TABLE IF NOT EXISTS EmployeeDayStatus (
+  employee_id VARCHAR(191) NOT NULL,
+  work_date   DATE NOT NULL,
+  status      ENUM('NOT_CHECKED_IN','WORKING','OFF_DUTY','ON_LEAVE') NOT NULL,
+  source      ENUM('SYSTEM','ATTENDANCE','LEAVE','MANUAL') NOT NULL DEFAULT 'SYSTEM',
+  set_by      INT NULL,                  -- Staff.staff_id (หัวหน้างาน)
+  note        VARCHAR(255) NULL,         -- เก็บข้อความสั้น ๆ เช่น "SICK"
+  updated_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (employee_id, work_date),
+  FOREIGN KEY (employee_id) REFERENCES Employee(employee_id) ON DELETE CASCADE,
+  FOREIGN KEY (set_by) REFERENCES Staff(staff_id) ON DELETE SET NULL
+);
+
+
+  -- ตารางคำขอลา
+CREATE TABLE IF NOT EXISTS LeaveRequest (
+  leave_id     INT AUTO_INCREMENT PRIMARY KEY,
+  employee_id  VARCHAR(191) NOT NULL,
+  leave_date   DATE NOT NULL,                         -- วันที่ลา (กรณีนี้เน้น “วันนี้”)
+  leave_type   ENUM('SICK','PERSONAL','VACATION','OTHER') NOT NULL,
+  reason       TEXT,
+  approved_by  INT NOT NULL,                          -- หัวหน้างานที่อนุมัติ
+  approved_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_leave_emp_date (employee_id, leave_date),
+  FOREIGN KEY (employee_id) REFERENCES Employee(employee_id) ON DELETE CASCADE,
+  FOREIGN KEY (approved_by) REFERENCES Staff(staff_id) ON DELETE RESTRICT,
+  INDEX idx_leave_emp (employee_id, leave_date)
+);

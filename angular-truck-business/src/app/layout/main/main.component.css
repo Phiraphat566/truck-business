@@ -120,12 +120,7 @@ a.router-link-active {
   border-color: #3b82f6;
 }
 
-/* Content Area Enhancement - Blue Theme */
-.enhanced-content {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 20px 60px rgba(59, 130, 246, 0.08);
-}
+
 
 /* Logout Button Enhancement - Blue Theme */
 .logout-btn {
