@@ -14,6 +14,9 @@ import incomeRoutes from './routes/incomeRoutes.js';
 import employeeDayStatusRoutes from './routes/employeeDayStatusRoutes.js';
 import workYearRoutes from './routes/workYearRoutes.js';
 import leaveRequestRoutes from './routes/leaveRequestRoutes.js';
+import financeRoutes from './routes/financeRoutes.js';
+import invoiceRoutes from './routes/invoiceRoutes.js';
+import invoiceYearRoutes from './routes/invoiceYearRoutes.js';
 
 dotenv.config();
 const app = express();
@@ -42,6 +45,10 @@ app.use('/api/income', incomeRoutes);
 app.use('/api/employee-day-status', employeeDayStatusRoutes);
 app.use('/api/work-years', workYearRoutes);
 app.use('/api/leaves', leaveRequestRoutes);
+
+app.use('/api/finance', financeRoutes);
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/invoice-years', invoiceYearRoutes);
 
 // health
 app.get('/health', (_req, res) => res.send('ok'));

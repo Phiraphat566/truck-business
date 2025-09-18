@@ -58,21 +58,21 @@
         {{ isDark ? '' : '' }}
           </span>
 
-      <!-- ใช้ input เป็นตัวควบคุมสถานะ -->
-      <input
+       <!-- ใช้ input เป็นตัวควบคุมสถานะ -->
+       <input
         type="checkbox"
         class="sr-only peer"
         [checked]="isDark"
         (change)="toggleTheme()"
         aria-label="Toggle dark mode"
-      />
+       />
 
-      <!-- แทร็ก (พื้นหลังของสวิตช์) -->
-      <div
+       <!-- แทร็ก (พื้นหลังของสวิตช์) -->
+       <div
         class="relative w-16 h-9 rounded-full transition-colors duration-300
               bg-gray-200 peer-checked:bg-emerald-500
               border border-gray-300 peer-checked:border-emerald-500"
-      >
+       >
         <!-- ปุ่มกลม  -->
         <span
           class="switch-thumb absolute top-1 left-1 w-7 h-7 rounded-full bg-white
@@ -80,8 +80,8 @@
                 peer-checked:translate-x-7
                 border border-white"
         ></span>
-      </div>
-</label>
+       </div>
+        </label>
 
       </div>
     </div>

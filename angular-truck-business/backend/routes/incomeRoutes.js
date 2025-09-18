@@ -4,16 +4,24 @@ import {
   getIncomeById,
   createIncome,
   updateIncome,
-  deleteIncome,
+  deleteIncome, 
+  getIncomesByYear,
+  getIncomeByMonth,
   upload
 } from '../controllers/incomeController.js';
 
 const router = express.Router();
 
+router.get('/summary/by-month', getIncomeByMonth);
+
+router.get('/year/:year', getIncomesByYear);
+
 router.get('/', getAllIncomes);
 router.get('/:id', getIncomeById);
-router.post('/', upload.single('contract_image'), createIncome);
-router.put('/:id', upload.single('contract_image'), updateIncome);
+
+// อัปโหลดไฟล์แนบ: field name = 'file'
+router.post('/', upload.single('file'), createIncome);
+router.put('/:id', upload.single('file'), updateIncome);
 router.delete('/:id', deleteIncome);
 
 export default router;

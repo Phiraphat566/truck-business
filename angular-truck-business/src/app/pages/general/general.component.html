@@ -1,359 +1,190 @@
-<a
-  routerLink="/general"
-  routerLinkActive="active-link"
-  [routerLinkActiveOptions]="{ exact: true }"
-  class="nav-item"
->
-</a>
-
-<!-- Modern General Dashboard -->
-<div class="dashboard-container">
-  <!-- Header Section -->
-  <div class="dashboard-header">
-    <div class="header-content">
-      <div class="header-main">
-        <div class="header-info">
-          <div class="header-icon">
+<!-- DASHBOARD (Tailwind only) -->
+<div class="min-h-screen bg-slate-900 text-slate-100">
+  <!-- Header -->
+  <div class="mx-auto max-w-7xl px-4 pt-6">
+    <div class="rounded-2xl bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 p-4 ring-1 ring-white/10 shadow-lg shadow-black/20">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="grid h-10 w-10 place-items-center rounded-xl bg-white/20 backdrop-blur">
             <i class="ni ni-chart-bar-32 text-white text-xl"></i>
           </div>
           <div>
-            <h1 class="header-title">Dashboard ภาพรวม</h1>
-            <p class="header-subtitle">ข้อมูลสถิติและผลประกอบการ</p>
+            <h1 class="text-lg font-bold leading-5">Dashboard ภาพรวม</h1>
+            <p class="text-xs text-white/80">ข้อมูลสถิติและผลประกอบการ</p>
           </div>
         </div>
-        <div class="header-actions">
-          <button class="btn-secondary">
-            <i class="ni ni-archive-2 mr-2"></i>
-            รายงาน
+        <div class="flex items-center gap-2">
+          <button class="inline-flex items-center gap-2 rounded-lg bg-white/15 px-3 py-2 text-sm text-white hover:bg-white/20">
+            <i class="ni ni-archive-2"></i> รายงาน
           </button>
-          <button class="btn-primary">
-            <i class="ni ni-settings mr-2"></i>
-            ตั้งค่า
+          <button class="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-100">
+            <i class="ni ni-settings"></i> ตั้งค่า
           </button>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="main-content">
-    <div class="content-sections">
-      <!-- Modern Stat Cards -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-header">
-            <div class="stat-icon green">
-              <i class="ni ni-user-run text-white text-lg"></i>
-            </div>
-            <span class="stat-badge green">+234%</span>
+  <main class="mx-auto max-w-7xl px-4 py-6">
+    <!-- KPI CARDS -->
+    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <!-- ใบการ์ด KPI ทั้ง 4 ใบ (เหมือนเดิม) -->
+      <article class="rounded-2xl ring-1 ring-white/10 bg-slate-800/60 p-4 shadow-lg shadow-black/20 overflow-hidden">
+        <div class="flex items-start justify-between">
+          <div class="grid h-10 w-10 place-items-center rounded-lg bg-emerald-500/20">
+            <i class="ni ni-user-run text-emerald-300"></i>
           </div>
-          <p class="stat-label">บัญชีใหม่</p>
-          <h3 class="stat-value">58</h3>
-          <p class="stat-change positive">เพิ่มขึ้น 234% จากเดือนที่แล้ว</p>
+          <span class="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs text-emerald-300">+234%</span>
         </div>
+        <p class="mt-4 text-sm text-slate-300">บัญชีใหม่</p>
+        <p class="text-2xl font-semibold">58</p>
+        <p class="mt-1 text-xs text-emerald-300">เพิ่มขึ้น 234% จากเดือนที่แล้ว</p>
+      </article>
 
-        <div class="stat-card">
-          <div class="stat-header">
-            <div class="stat-icon red">
-              <i class="ni ni-money-coins text-white text-lg"></i>
-            </div>
-            <span class="stat-badge red">71%</span>
+      <article class="rounded-2xl ring-1 ring-white/10 bg-slate-800/60 p-4 shadow-lg shadow-black/20 overflow-hidden">
+        <div class="flex items-start justify-between">
+          <div class="grid h-10 w-10 place-items-center rounded-lg bg-rose-500/20">
+            <i class="ni ni-money-coins text-rose-300"></i>
           </div>
-          <p class="stat-label">รายจ่ายรวม</p>
-          <h3 class="stat-value">62</h3>
-          <p class="stat-change negative">71% ของงบประมาณ</p>
+          <span class="rounded-full bg-rose-500/20 px-2 py-0.5 text-xs text-rose-300">71%</span>
         </div>
+        <p class="mt-4 text-sm text-slate-300">รายจ่ายรวม</p>
+        <p class="text-2xl font-semibold">62</p>
+        <p class="mt-1 text-xs text-rose-300">71% ของงบประมาณ</p>
+      </article>
 
-        <div class="stat-card">
-          <div class="stat-header">
-            <div class="stat-icon amber">
-              <i class="ni ni-building text-white text-lg"></i>
-            </div>
-            <span class="stat-badge amber">72</span>
+      <article class="rounded-2xl ring-1 ring-white/10 bg-slate-800/60 p-4 shadow-lg shadow-black/20 overflow-hidden">
+        <div class="flex items-start justify-between">
+          <div class="grid h-10 w-10 place-items-center rounded-lg bg-amber-500/20">
+            <i class="ni ni-building text-amber-300"></i>
           </div>
-          <p class="stat-label">มูลค่าบริษัท</p>
-          <h3 class="stat-value">฿1.45M</h3>
-          <p class="stat-change neutral">ประเมินมูลค่าล่าสุด</p>
+          <span class="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs text-amber-300">72</span>
         </div>
+        <p class="mt-4 text-sm text-slate-300">มูลค่าบริษัท</p>
+        <p class="text-2xl font-semibold">฿1.45M</p>
+        <p class="mt-1 text-xs text-amber-300">ประเมินมูลค่าล่าสุด</p>
+      </article>
 
-        <div class="stat-card">
-          <div class="stat-header">
-            <div class="stat-icon blue">
-              <i class="ni ni-single-02 text-white text-lg"></i>
-            </div>
-            <span class="stat-badge blue">81</span>
+      <article class="rounded-2xl ring-1 ring-white/10 bg-slate-800/60 p-4 shadow-lg shadow-black/20 overflow-hidden">
+        <div class="flex items-start justify-between">
+          <div class="grid h-10 w-10 place-items-center rounded-lg bg-sky-500/20">
+            <i class="ni ni-single-02 text-sky-300"></i>
           </div>
-          <p class="stat-label">พนักงานใหม่</p>
-          <h3 class="stat-value">+34</h3>
-          <p class="stat-change positive">จ้างงานเดือนนี้</p>
+          <span class="rounded-full bg-sky-500/20 px-2 py-0.5 text-xs text-sky-300">81</span>
         </div>
-      </div>
+        <p class="mt-4 text-sm text-slate-300">พนักงานใหม่</p>
+        <p class="text-2xl font-semibold">+34</p>
+        <p class="mt-1 text-xs text-emerald-300">จ้างงานเดือนนี้</p>
+      </article>
+    </section>
 
-      <!-- Modern Charts Section -->
-      <div class="charts-grid">
-        <!-- Traffic Sources Chart -->
-        <div class="chart-card">
-          <div class="chart-header">
-            <div>
-              <h3 class="chart-title">แหล่งที่มาของข้อมูล</h3>
-              <p class="chart-subtitle">การวิเคราะห์การเข้าใช้งาน</p>
-            </div>
-            <div class="chart-status"></div>
-          </div>
-          <div class="chart-container">
-            <canvas baseChart
-                    [data]="trafficChart"
-                    [options]="trafficOptions"
-                    [type]="trafficType"
-                    style="width: 100%; height: 100%;">
-            </canvas>
-          </div>
+    <!-- CHARTS: ซ้าย = การเข้างาน, ขวา = โดนัท (พอดีกรอบ) -->
+    <section class="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <!-- การเข้างานพนักงาน -->
+      <article class="rounded-2xl ring-1 ring-white/10 bg-slate-800/60 p-4 shadow-lg shadow-black/20 overflow-hidden">
+        <div class="mb-2">
+          <h3 class="text-sm font-semibold">การเข้างานพนักงาน (14 วัน)</h3>
+          <p class="text-xs text-slate-400">ตรงเวลา / สาย / ลา / ขาด (ซ้อนแท่ง)</p>
         </div>
-
-        <!-- Circular Performance Chart -->
-        <div class="chart-card">
-          <div class="chart-header">
-            <div>
-              <h3 class="chart-title">ประสิทธิภาพการทำงาน</h3>
-              <p class="chart-subtitle">สถิติโดยรวม</p>
-            </div>
-            <div>
-              <span class="stat-badge green">ดี</span>
-            </div>
-          </div>
-          <div class="chart-container">
-            <canvas baseChart
-                    [data]="trafficChart"
-                    [options]="trafficOptions"
-                    [type]="trafficType"
-                    style="width: 100%; height: 100%;">
-            </canvas>
-          </div>
+        <div class="h-64">
+          <canvas
+            baseChart
+            [type]="'bar'"
+            [data]="attendanceData"
+            [options]="attendanceOpt"
+            class="h-full w-full">
+          </canvas>
         </div>
+      </article>
 
-        <!-- Recent Activities -->
-        <div class="chart-card">
-          <div class="chart-header">
-            <div>
-              <h3 class="chart-title">กิจกรรมล่าสุด</h3>
-              <p class="chart-subtitle">การเปลี่ยนแปลงในระบบ</p>
-            </div>
-            <button class="btn-link">ดูทั้งหมด</button>
-          </div>
-          <div class="activity-list">
-            <div class="activity-item">
-              <div class="activity-icon green">
-                <i class="ni ni-single-02"></i>
-              </div>
-              <div class="activity-content">
-                <p class="activity-title">ผู้ใช้ใหม่ลงทะเบียน</p>
-                <p class="activity-time">5 นาทีที่แล้ว</p>
-              </div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-icon blue">
-                <i class="ni ni-bag-17"></i>
-              </div>
-              <div class="activity-content">
-                <p class="activity-title">มีคำสั่งซื้อใหม่</p>
-                <p class="activity-time">10 นาทีที่แล้ว</p>
-              </div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-icon amber">
-                <i class="ni ni-settings-gear-65"></i>
-              </div>
-              <div class="activity-content">
-                <p class="activity-title">เซิร์ฟเวอร์รีสตาร์ท</p>
-                <p class="activity-time">30 นาทีที่แล้ว</p>
-              </div>
-            </div>
+      <!-- ความคืบหน้ารายได้ -->
+      <article class="rounded-2xl ring-1 ring-white/10 bg-slate-800/60 p-4 shadow-lg shadow-black/20 overflow-hidden">
+        <div class="mb-2">
+          <h3 class="text-sm font-semibold">เป้าหมายรายได้</h3>
+          <p class="text-xs text-slate-400">เป้าหมายรายได้ประจำปี</p>
+        </div>
+        <div class="h-64">
+          <canvas
+            baseChart
+            [type]="'doughnut'"
+            [data]="circularChartData"
+            [options]="circularOpts"
+            class="h-full w-full">
+          </canvas>
+        </div>
+        <div class="mt-3 text-center">
+          <p class="text-xs text-slate-400">เป้าหมาย: ฿10,000,000</p>
+          <p class="mt-1 text-lg font-bold text-emerald-400">บรรลุแล้ว ฿7,500,000</p>
+        </div>
+      </article>
+    </section>
+
+    <!-- การ์ดการเงิน 4 ใบ (เหมือนเดิม) -->
+    <section class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <!-- สี่การ์ดเดิมตามที่มี -->
+      <article class="rounded-2xl ring-1 ring-white/10 bg-slate-800/60 p-4 shadow-lg shadow-black/20 overflow-hidden">
+        <div class="mb-3 flex items-center justify-between">
+          <span class="grid h-10 w-10 place-items-center rounded-lg bg-emerald-500/20 text-emerald-300">
+            <i class="ni ni-money-coins"></i>
+          </span>
+          <div class="text-right">
+            <p class="text-xs text-slate-400">รายได้</p>
+            <p class="text-xl font-semibold">฿5,456</p>
+            <p class="text-xs text-emerald-300">+14%</p>
           </div>
         </div>
-      </div>
+        <div class="h-2 w-full rounded-full bg-white/10">
+          <div class="h-2 rounded-full bg-emerald-500" style="width:75%"></div>
+        </div>
+      </article>
 
-      <!-- Income Progress & Financial Summary -->
-      <div class="financial-grid">
-        <!-- Income Progress Chart -->
-        <div class="chart-card">
-          <div class="chart-header">
-            <div>
-              <h3 class="chart-title">ความคืบหน้ารายได้</h3>
-              <p class="chart-subtitle">เป้าหมายรายได้ประจำปี</p>
-            </div>
-            <span class="stat-badge green">
-              {{ incomeProgressValue }}%
-            </span>
-          </div>
-          <div class="chart-container" style="display: flex; align-items: center; justify-content: center;">
-            <canvas baseChart
-                    [data]="{
-                      labels: ['บรรลุแล้ว', 'คงเหลือ'],
-                      datasets: [
-                        {
-                          data: [incomeProgressValue, 100 - incomeProgressValue],
-                          backgroundColor: ['#10b981', '#e5e7eb'],
-                          borderWidth: 0
-                        }
-                      ]
-                    }"
-                    [type]="'doughnut'"
-                    style="width: 100%; height: 100%;">
-            </canvas>
-          </div>
-          <div style="margin-top: 1rem; text-align: center;">
-            <p class="chart-subtitle">เป้าหมาย: ฿10,000,000</p>
-            <p style="font-size: 1.125rem; font-weight: 700; color: #059669; margin-top: 0.25rem;">
-              บรรลุแล้ว ฿{{ (incomeProgressValue * 100000).toLocaleString() }}
-            </p>
+      <article class="rounded-2xl ring-1 ring-white/10 bg-slate-800/60 p-4 shadow-lg shadow-black/20 overflow-hidden">
+        <div class="mb-3 flex items-center justify-between">
+          <span class="grid h-10 w-10 place-items-center rounded-lg bg-rose-500/20 text-rose-300">
+            <i class="ni ni-credit-card"></i>
+          </span>
+          <div class="text-right">
+            <p class="text-xs text-slate-400">รายจ่าย</p>
+            <p class="text-xl font-semibold">฿4,764</p>
+            <p class="text-xs text-rose-300">-8%</p>
           </div>
         </div>
+        <div class="h-2 w-full rounded-full bg-white/10">
+          <div class="h-2 rounded-full bg-rose-500" style="width:67%"></div>
+        </div>
+      </article>
 
-        <!-- Financial Summary Cards -->
-        <div class="financial-cards">
-          <div class="stat-card">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-              <div class="stat-icon green">
-                <i class="ni ni-money-coins text-white text-lg"></i>
-              </div>
-              <div style="text-align: right;">
-                <p class="chart-subtitle">รายได้</p>
-                <p class="stat-value">฿5,456</p>
-                <p class="stat-change positive">+14%</p>
-              </div>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill green" style="width: 75%;"></div>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-              <div class="stat-icon red">
-                <i class="ni ni-credit-card text-white text-lg"></i>
-              </div>
-              <div style="text-align: right;">
-                <p class="chart-subtitle">รายจ่าย</p>
-                <p class="stat-value">฿4,764</p>
-                <p class="stat-change negative">-8%</p>
-              </div>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill red" style="width: 67%;"></div>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-              <div class="stat-icon amber">
-                <i class="ni ni-chart-line text-white text-lg"></i>
-              </div>
-              <div style="text-align: right;">
-                <p class="chart-subtitle">การใช้จ่าย</p>
-                <p class="stat-value">฿1.5M</p>
-                <p class="stat-change positive">+15%</p>
-              </div>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill amber" style="width: 80%;"></div>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-              <div class="stat-icon purple">
-                <i class="ni ni-chart-pie text-white text-lg"></i>
-              </div>
-              <div style="text-align: right;">
-                <p class="chart-subtitle">รวมทั้งหมด</p>
-                <p class="stat-value">฿31,564</p>
-                <p class="stat-change positive">+76%</p>
-              </div>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill purple" style="width: 100%;"></div>
-            </div>
+      <article class="rounded-2xl ring-1 ring-white/10 bg-slate-800/60 p-4 shadow-lg shadow-black/20 overflow-hidden">
+        <div class="mb-3 flex items-center justify-between">
+          <span class="grid h-10 w-10 place-items-center rounded-lg bg-amber-500/20 text-amber-300">
+            <i class="ni ni-chart-line"></i>
+          </span>
+          <div class="text-right">
+            <p class="text-xs text-slate-400">การใช้จ่าย</p>
+            <p class="text-xl font-semibold">฿1.5M</p>
+            <p class="text-xs text-amber-300">+15%</p>
           </div>
         </div>
-      </div>
+        <div class="h-2 w-full rounded-full bg-white/10">
+          <div class="h-2 rounded-full bg-amber-500" style="width:80%"></div>
+        </div>
+      </article>
 
-      <!-- Modern Target Section -->
-      <div class="target-section">
-        <div class="target-header">
-          <div>
-            <h3 class="target-title">เป้าหมายการดำเนินงาน</h3>
-            <p class="target-subtitle">ติดตามความคืบหน้าเป้าหมายประจำปี</p>
-          </div>
-          <div>
-            <span class="stat-badge blue">Q3 2025</span>
+      <article class="rounded-2xl ring-1 ring-white/10 bg-slate-800/60 p-4 shadow-lg shadow-black/20 overflow-hidden">
+        <div class="mb-3 flex items-center justify-between">
+          <span class="grid h-10 w-10 place-items-center rounded-lg bg-violet-500/20 text-violet-300">
+            <i class="ni ni-chart-pie"></i>
+          </span>
+          <div class="text-right">
+            <p class="text-xs text-slate-400">รวมทั้งหมด</p>
+            <p class="text-xl font-semibold">฿31,564</p>
+            <p class="text-xs text-emerald-300">+76%</p>
           </div>
         </div>
-        
-        <div class="target-grid">
-          <div class="target-card red">
-            <div class="target-card-header">
-              <div class="target-card-icon red">
-                <i class="ni ni-money-coins text-white"></i>
-              </div>
-              <span class="target-card-value" style="color: #dc2626;">71%</span>
-            </div>
-            <h4 class="target-card-title">เป้าหมายรายได้</h4>
-            <div class="target-card-progress">
-              <div class="progress-bar">
-                <div class="progress-fill red" style="width: 71%;"></div>
-              </div>
-            </div>
-            <p class="target-card-description" style="color: #dc2626;">เหลือ 29% เพื่อบรรลุเป้าหมาย</p>
-          </div>
-
-          <div class="target-card green">
-            <div class="target-card-header">
-              <div class="target-card-icon green">
-                <i class="ni ni-credit-card text-white"></i>
-              </div>
-              <span class="target-card-value" style="color: #059669;">54%</span>
-            </div>
-            <h4 class="target-card-title">เป้าหมายรายจ่าย</h4>
-            <div class="target-card-progress">
-              <div class="progress-bar">
-                <div class="progress-fill green" style="width: 54%;"></div>
-              </div>
-            </div>
-            <p class="target-card-description" style="color: #059669;">อยู่ในงบประมาณที่วางแผน</p>
-          </div>
-
-          <div class="target-card amber">
-            <div class="target-card-header">
-              <div class="target-card-icon amber">
-                <i class="ni ni-chart-line text-white"></i>
-              </div>
-              <span class="target-card-value" style="color: #d97706;">32%</span>
-            </div>
-            <h4 class="target-card-title">เป้าหมายการลงทุน</h4>
-            <div class="target-card-progress">
-              <div class="progress-bar">
-                <div class="progress-fill amber" style="width: 32%;"></div>
-              </div>
-            </div>
-            <p class="target-card-description" style="color: #d97706;">ยังมีโอกาสเพิ่มการลงทุน</p>
-          </div>
-
-          <div class="target-card blue">
-            <div class="target-card-header">
-              <div class="target-card-icon blue">
-                <i class="ni ni-chart-pie text-white"></i>
-              </div>
-              <span class="target-card-value" style="color: #2563eb;">89%</span>
-            </div>
-            <h4 class="target-card-title">เป้าหมายรวม</h4>
-            <div class="target-card-progress">
-              <div class="progress-bar">
-                <div class="progress-fill blue" style="width: 89%;"></div>
-              </div>
-            </div>
-            <p class="target-card-description" style="color: #2563eb;">ใกล้บรรลุเป้าหมายแล้ว</p>
-          </div>
+        <div class="h-2 w-full rounded-full bg-white/10">
+          <div class="h-2 rounded-full bg-violet-500" style="width:100%"></div>
         </div>
-      </div>
-    </div>
-  </div>
+      </article>
+    </section>
+  </main>
 </div>

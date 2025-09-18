@@ -25,12 +25,15 @@ enum InvoiceStatus {
   PENDING // ค้างชำระ
   OVERDUE // เกินกำหนด
   PAID // ชำระแล้ว
+  PARTIAL // ชำระบางส่วน
 }
 
 enum ArrivalStatus {
   ON_TIME
   LATE
 }
+
+
 
 model Employee {
   id               String  @id @map("employee_id")
@@ -209,38 +212,46 @@ model TravelCost {
 
 model Income {
   id                  Int      @id @default(autoincrement())
-  income_date         DateTime @map("income_date") @db.Date // วันที่ "รับเงินจริง"
-  description         String   @db.Text
-  category            String   @db.VarChar(100)
-  amount              Decimal  @db.Decimal(12, 2)
-  contract_image_path String?  @map("contract_image_path") @db.VarChar(255)
-  created_at          DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  income_date         DateTime @db.Date
+  description         String?
+  category            String?
+  amount              Decimal  @db.Decimal(10,2)
+  contract_image_path String?
+  created_at          DateTime @default(now())
 
-  // ผูกกับ invoice ที่จ่ายแล้ว (ถ้ามาจากใบแจ้งหนี้)
-  invoiceId Int?     @unique
-  invoice   Invoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
-
-  @@index([income_date], map: "idx_income_date")
+  // (ถ้ามีฟิลด์ invoice_id อยู่แล้ว สามารถคงไว้ชั่วคราว/ค่อยถอดทีหลังได้)
+  // invoice_id       Int?
+  // invoice          Invoice? @relation(fields: [invoice_id], references: [id], onDelete: SetNull)
 }
 
 model Invoice {
-  id           Int           @id @default(autoincrement())
-  invoiceNo    String        @unique @db.VarChar(50) // เลขที่เอกสาร เช่น 202501-1006
-  customerName String        @db.VarChar(255) // ยังไม่ทำตารางลูกค้า แยกเป็นชื่อก่อน
-  contractDate DateTime      @db.Date // วันที่ทำสัญญา
-  dueDate      DateTime      @db.Date // วันครบกำหนด
-  amount       Decimal       @db.Decimal(12, 2)
-  description  String?       @db.Text
-  status       InvoiceStatus @default(PENDING) // เก็บไว้ เพื่อให้ฟิลเตอร์เร็ว
-  paidAt       DateTime?     @db.Date // วันที่จ่ายจริง (ถ้าจ่ายแล้ว)
-  createdAt    DateTime      @default(now()) @db.DateTime(0)
-
-  // สัมพันธ์กับ Income: 1 ใบแจ้งหนี้ = 0..1 รายการรับเงิน (จ่ายครั้งเดียว)
-  income Income?
-
-  @@index([contractDate, status], map: "idx_invoice_contract_status")
-  @@index([dueDate, status], map: "idx_invoice_due_status")
+  id           Int             @id @default(autoincrement())
+  invoiceNo    String          @unique
+  customerName String
+  contractDate DateTime
+  dueDate      DateTime
+  amount      Decimal          @db.Decimal(10,2)
+  status      InvoiceStatus    @default(PENDING)
+  paidAt      DateTime?
+  createdAt   DateTime         @default(now())
+  description  String?         @db.Text
+  payments    PaymentRecord[]  // <- ใช้ตารางนี้นับยอดที่จ่ายไปแล้ว
 }
+
+model PaymentRecord {
+  id           Int      @id @default(autoincrement())
+  payment_date DateTime @db.Date
+  amount       Decimal  @db.Decimal(10,2)
+  description  String?
+  category     String?  // เช่น 'BILL'
+
+  created_at   DateTime @default(now())
+
+  invoice_id   Int
+  invoice      Invoice  @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+}
+
+
 
 model Staff {
   staff_id           Int      @id @default(autoincrement())
@@ -291,5 +302,12 @@ model WorkYear {
   created_at DateTime @default(now()) @db.DateTime(0)
 
   @@map("WorkYear") // จะใส่หรือไม่ใส่ก็ได้ แค่ทำให้ชื่อ table ชัด
+}
+
+model InvoiceYear {
+  year       Int      @id
+  created_at DateTime @default(now()) @db.DateTime(0)
+
+  @@map("InvoiceYear")
 }
 
