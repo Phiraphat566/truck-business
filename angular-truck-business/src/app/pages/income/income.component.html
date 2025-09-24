@@ -1,390 +1,386 @@
-<!-- Income Dashboard -->
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-  <div class="mx-auto max-w-7xl px-4 py-6">
-    <!-- Header + Filter (UI เท่านั้น) -->
-    <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-      <div>
-        <h1 class="text-3xl font-bold text-gray-900">รายได้และผลกำไร</h1>
-        <p class="text-gray-600">สรุปรายได้และกำไรของธุรกิจขนส่ง</p>
-      </div>
-      <div class="flex flex-wrap items-center gap-2">
-        <select class="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700">
-          <option>เดือนนี้</option>
-          <option>ไตรมาสนี้</option>
-          <option>ปีนี้</option>
-        </select>
-        <select class="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700">
-          <option>ทุกหมวดหมู่</option>
-          <option>ขนส่ง</option>
-          <option>บริการ</option>
-          <option>อื่นๆ</option>
-        </select>
-        <button class="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 hover:bg-gray-50">
-          <i class="ni ni-archive-2 mr-2"></i>ส่งออกรายงาน
-        </button>
-        <!-- เปิดป๊อปอัพโหมดเพิ่มรายได้ -->
-        <button
-          class="h-10 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 px-4 text-sm font-medium text-white hover:from-green-600 hover:to-emerald-700"
-          (click)="selectedIncome = null; popupVisible = true">
-          <i class="ni ni-fat-add mr-2"></i>เพิ่มรายได้
-        </button>
+<div class="min-h-screen bg-transparent bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-900 dark:text-slate-100" [class.dark]="isDark">
+  <!-- Header -->
+  <div class="bg-white shadow-sm border-b border-gray-100 dark:bg-slate-900 dark:border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 py-6">
+      <div class="flex items-start justify-between gap-4">
+        <div class="flex items-center space-x-4">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-slate-100">การเงินรายรับ</h1>
+            <p class="text-gray-500 dark:text-slate-400 text-sm">จัดการเอกสารรายรับแบบงวดและสรุปตามเดือน</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button (click)="addNewYear()" class="px-4 py-2 rounded-lg font-medium border transition bg-indigo-600 text-white border-indigo-700 hover:bg-indigo-700">เพิ่มปีใหม่</button>
+
+          <!-- ปุ่มโหมดแก้ไข -->
+          <button type="button"
+                  (click)="editingMode = !editingMode"
+                  [attr.aria-pressed]="editingMode"
+                  class="px-4 py-2.5 rounded-lg font-medium border transition"
+                  [ngClass]="editingMode
+                    ? 'bg-amber-100 text-amber-700 border-amber-300'
+                    : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'">
+            {{ editingMode ? 'ออกจากโหมดแก้ไข' : 'โหมดแก้ไข' }}
+          </button>
+
+          <!-- สวิตช์ธีม -->
+          <label class="inline-flex items-center gap-3 cursor-pointer select-none">
+            <input type="checkbox" class="sr-only peer" [checked]="isDark" (change)="toggleTheme()" />
+            <div class="relative w-16 h-9 rounded-full transition-colors duration-300 bg-gray-200 peer-checked:bg-emerald-500 border border-gray-300 peer-checked:border-emerald-500">
+              <span class="absolute top-1 left-1 w-7 h-7 rounded-full bg-white transition-transform duration-300 peer-checked:translate-x-7 border border-white"></span>
+            </div>
+          </label>
+        </div>
       </div>
     </div>
-
-    <!-- KPI cards -->
-    <section class="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-      <!-- ปีนี้ -->
-      <article class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-        <div class="mb-4 flex items-center justify-between">
-          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
-            <i class="ni ni-money-coins text-lg"></i>
-          </div>
-          <span class="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700">ปีนี้</span>
-        </div>
-        <p class="text-sm font-medium uppercase tracking-wider text-gray-500">รายได้รวมปีนี้</p>
-        <h3 class="text-2xl font-bold text-gray-900">฿{{ (summary?.thisYear || 0) | number:'1.0-0' }}</h3>
-        <div class="mt-4">
-          <div class="mb-1 flex items-center justify-between text-xs text-gray-500">
-            <span>จากเป้าหมาย 10,000,000</span>
-            <span class="font-semibold text-blue-600">
-              {{ (((summary?.thisYear || 0)/10000000)*100) | number:'1.0-0' }}%
-            </span>
-          </div>
-          <div class="h-2 w-full rounded-full bg-gray-100">
-            <div class="h-2 rounded-full bg-blue-500" [style.width.%]="((summary?.thisYear || 0)/10000000)*100"></div>
-          </div>
-        </div>
-      </article>
-
-      <!-- เดือนนี้ -->
-      <article class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-        <div class="mb-4 flex items-center justify-between">
-          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-lg">
-            <i class="ni ni-calendar-grid-58 text-lg"></i>
-          </div>
-          <span class="rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700">เดือนนี้</span>
-        </div>
-        <p class="text-sm font-medium uppercase tracking-wider text-gray-500">รายได้เดือนนี้</p>
-        <h3 class="text-2xl font-bold text-gray-900">฿{{ (summary?.thisMonth || 0) | number:'1.0-0' }}</h3>
-        <p class="mt-1 text-xs text-emerald-600">เดือนก่อน: ฿{{ (summary?.lastMonth || 0) | number:'1.0-0' }}</p>
-      </article>
-
-      <!-- เฉลี่ยต่อวัน -->
-      <article class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-        <div class="mb-4 flex items-center justify-between">
-          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg">
-            <i class="ni ni-chart-line text-lg"></i>
-          </div>
-          <span class="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">เฉลี่ย</span>
-        </div>
-        <p class="text-sm font-medium uppercase tracking-wider text-gray-500">รายได้เฉลี่ยต่อวัน</p>
-        <h3 class="text-2xl font-bold text-gray-900">฿{{ (summary?.avgDaily || 0) | number:'1.0-0' }}</h3>
-      </article>
-
-      <!-- ความคืบหน้ารวม -->
-      <article class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-        <div class="mb-4 flex items-center justify-between">
-          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 text-white shadow-lg">
-            <i class="ni ni-chart-pie text-lg"></i>
-          </div>
-        <span class="rounded-full bg-purple-100 px-2.5 py-1 text-xs font-semibold text-purple-700">สถานะเป้า</span>
-        </div>
-        <p class="text-sm font-medium uppercase tracking-wider text-gray-500">ความคืบหน้ารวม</p>
-        <h3 class="text-2xl font-bold text-gray-900">
-          {{ (((summary?.thisYear || 0)/10000000)*100) | number:'1.0-0' }}%
-        </h3>
-        <p class="mt-1 text-xs text-purple-600">บรรลุแล้ว ฿{{ (summary?.thisYear || 0) | number:'1.0-0' }}</p>
-      </article>
-    </section>
-
-    <!-- Charts -->
-    <section class="mb-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
-      <article class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-        <div class="mb-4">
-          <h3 class="text-xl font-bold text-gray-900">แนวโน้มรายได้</h3>
-          <p class="text-sm text-gray-500">12 เดือนย้อนหลัง</p>
-        </div>
-        <div class="h-64">
-          <canvas baseChart [data]="chartLineData" [options]="chartOptions" [type]="chartType" class="h-full w-full"></canvas>
-        </div>
-      </article>
-
-      <article class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-        <div class="mb-4 flex items-center justify-between">
-          <div>
-            <h3 class="text-xl font-bold text-gray-900">แยกตามประเภทรายได้</h3>
-            <p class="text-sm text-gray-500">สัดส่วนรายได้เดือนนี้</p>
-          </div>
-          <div class="h-3 w-3 animate-pulse rounded-full bg-green-500"></div>
-        </div>
-        <div class="h-64">
-          <canvas baseChart [data]="pieChartData" [options]="pieChartOptions" [type]="pieChartType" class="h-full w-full"></canvas>
-        </div>
-
-        <!-- Legend คำนวณ % จาก data -->
-        <div class="mt-4 space-y-2 text-sm">
-          <ng-container *ngIf="pieChartData?.datasets?.[0]?.data as d">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="h-3 w-3 rounded-full bg-blue-500"></span>
-                <span class="text-gray-600">ขนส่งสินค้า</span>
-              </div>
-              <span class="font-semibold text-gray-900">
-                {{ ((+d[0] || 0) / (((+d[0]||0)+(+d[1]||0)+(+d[2]||0)) || 1) * 100) | number:'1.0-0' }}%
-              </span>
-            </div>
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="h-3 w-3 rounded-full bg-green-500"></span>
-                <span class="text-gray-600">บริการพิเศษ</span>
-              </div>
-              <span class="font-semibold text-gray-900">
-                {{ ((+d[1] || 0) / (((+d[0]||0)+(+d[1]||0)+(+d[2]||0)) || 1) * 100) | number:'1.0-0' }}%
-              </span>
-            </div>
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="h-3 w-3 rounded-full bg-amber-500"></span>
-                <span class="text-gray-600">อื่นๆ</span>
-              </div>
-              <span class="font-semibold text-gray-900">
-                {{ ((+d[2] || 0) / (((+d[0]||0)+(+d[1]||0)+(+d[2]||0)) || 1) * 100) | number:'1.0-0' }}%
-              </span>
-            </div>
-          </ng-container>
-        </div>
-      </article>
-    </section>
-
-    <!-- Table -->
-    <section class="rounded-2xl border border-gray-100 bg-white shadow-sm">
-      <div class="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-6 py-4">
-        <div>
-          <h3 class="text-xl font-bold text-gray-900">รายการรายรับ</h3>
-          <p class="text-sm text-gray-500">ข้อมูลรายรับรายการ</p>
-        </div>
-        <div class="flex items-center gap-3">
-          <div class="relative">
-            <i class="ni ni-zoom-split-in pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400"></i>
-            <input type="text" placeholder="ค้นหารายการ..." class="h-10 rounded-lg border border-gray-200 pl-10 pr-4 text-sm text-gray-700 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500">
-          </div>
-          <!-- ปุ่มเพิ่มรายการในตาราง ก็เปิดโหมดเพิ่มเหมือนกัน -->
-          <button class="h-10 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700"
-                  (click)="selectedIncome = null; popupVisible = true">
-            <i class="ni ni-fat-add mr-2 text-sm"></i>เพิ่มรายการ
-          </button>
-        </div>
-      </div>
-
-      <div class="max-h-[480px] overflow-auto">
-        <table class="w-full">
-          <thead class="sticky top-0 z-10 border-b border-gray-100 bg-white/95 backdrop-blur">
-            <tr>
-              <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">วันที่</th>
-              <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">รายการ</th>
-              <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">หมวดหมู่</th>
-              <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">รายได้</th>
-              <th class="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-600">การดำเนินการ</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            <tr *ngFor="let income of incomeList" class="transition-colors hover:bg-gray-50">
-              <td class="px-6 py-4 text-sm text-gray-900">{{ income.date }}</td>
-              <td class="px-6 py-4">
-                <div class="text-sm font-medium text-gray-900">{{ income.title }}</div>
-              </td>
-              <td class="px-6 py-4">
-                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
-                      [ngClass]="{
-                        'bg-blue-100 text-blue-800': income.category === 'ขนส่ง',
-                        'bg-green-100 text-green-800': income.category === 'บริการ',
-                        'bg-amber-100 text-amber-800': income.category === 'อื่นๆ'
-                      }">
-                  {{ income.category }}
-                </span>
-              </td>
-              <td class="px-6 py-4 text-sm font-semibold text-emerald-600">฿{{ income.amount | number:'1.0-0' }}</td>
-              <td class="px-6 py-4">
-                <div class="flex items-center justify-center gap-2">
-                  <button (click)="openPopup(income)" class="rounded-lg p-1.5 text-blue-600 hover:bg-blue-50">
-                    <i class="ni ni-single-02 text-sm"></i>
-                  </button>
-                  <button class="rounded-lg p-1.5 text-amber-600 hover:bg-amber-50">
-                    <i class="ni ni-ruler-pencil text-sm"></i>
-                  </button>
-                  <button class="rounded-lg p-1.5 text-red-600 hover:bg-red-50">
-                    <i class="ni ni-fat-remove text-sm"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-
-          <!-- Empty -->
-          <tbody *ngIf="incomeList.length === 0">
-            <tr>
-              <td colspan="5" class="py-14 text-center">
-                <div class="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-gray-100">
-                  <i class="ni ni-money-coins text-3xl text-gray-400"></i>
-                </div>
-                <h3 class="mb-2 text-lg font-medium text-gray-900">ยังไม่มีรายการรายรับ</h3>
-                <p class="mb-6 text-gray-500">เริ่มต้นโดยการเพิ่มรายการรายรับแรกของคุณ</p>
-                <button class="rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
-                        (click)="selectedIncome = null; popupVisible = true">
-                  เพิ่มรายการแรก
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
   </div>
 
-  <!-- Popup (ดูรายละเอียด / เพิ่มรายได้ ใช้กล่องเดียวกัน สลับด้วย selectedIncome) -->
-<div *ngIf="popupVisible" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-  <div class="w-full max-w-lg rounded-2xl bg-white shadow-2xl">
-    <!-- Header -->
-    <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-      <ng-container *ngIf="selectedIncome; else addTitle">
-        <h2 class="text-xl font-bold text-slate-900">รายละเอียดรายรับ</h2>
-      </ng-container>
-      <ng-template #addTitle>
-        <h2 class="text-xl font-bold text-slate-900">เพิ่มรายได้ใหม่</h2>
-      </ng-template>
-
-      <button (click)="closePopup()" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700">
-        <i class="ni ni-fat-remove text-lg"></i>
-      </button>
+  <div class="max-w-7xl mx-auto px-4 py-8 space-y-8">
+    <div *ngIf="apiError" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl dark:bg-rose-900/20 dark:border-rose-800 dark:text-rose-300">
+      {{ apiError }}
     </div>
 
-    <div class="p-6">
-      <!-- โหมดดูรายละเอียด -->
-      <div *ngIf="selectedIncome; else addForm" class="space-y-3 rounded-xl bg-slate-50 p-4">
-        <div class="flex justify-between text-sm">
-          <span class="text-slate-600">วันที่:</span>
-          <span class="font-medium text-slate-900">{{ selectedIncome?.date }}</span>
+    <!-- ===================== DASHBOARD VIEW ===================== -->
+    <ng-container *ngIf="view==='dashboard'">
+      <!-- Chart -->
+      <div class="rounded-2xl shadow-sm border overflow-hidden bg-white border-gray-100 dark:bg-slate-900 dark:border-slate-800">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-slate-800">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-slate-100">สรุปยอดรายรับ</h2>
+            <div class="text-gray-900 dark:text-slate-100 font-medium">ปี {{ selectedYear || '-' }}</div>
+          </div>
         </div>
-        <div class="flex justify-between text-sm">
-          <span class="text-slate-600">รายการ:</span>
-          <span class="font-medium text-slate-900">{{ selectedIncome?.title }}</span>
-        </div>
-        <div class="flex justify-between text-sm">
-          <span class="text-slate-600">หมวดหมู่:</span>
-          <span class="font-medium text-slate-900">{{ selectedIncome?.category }}</span>
-        </div>
-        <div class="flex justify-between text-sm">
-          <span class="text-slate-600">จำนวนเงิน:</span>
-          <span class="font-medium text-emerald-600">฿{{ selectedIncome?.amount | number:'1.0-0' }}</span>
+        <div class="p-6">
+          <div *ngIf="isLoading" class="text-sm text-gray-500 dark:text-slate-400 mb-3">กำลังโหลดข้อมูล...</div>
+          <canvas baseChart [data]="chartData" [options]="chartOptions" [type]="'bar'" [legend]="true" class="w-full h-64"></canvas>
         </div>
       </div>
 
-      <!-- โหมดเพิ่มรายได้ -->
-      <ng-template #addForm>
-        <!-- ส่งตรงไป /api/incomes (multer: contract_image) -->
-        <form action="/api/incomes" method="post" enctype="multipart/form-data" class="space-y-4">
-          <div>
-            <label class="mb-1 block text-sm font-semibold text-slate-800">
-              วันที่รับเงินจริง <span class="text-red-500">*</span>
-            </label>
-            <input
-              type="date" name="income_date" required
-              class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-500
-                     focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600">
-          </div>
+      <!-- Year & Month grid -->
+      <div class="rounded-2xl shadow-sm border p-6 bg-white border-gray-100 dark:bg-slate-900 dark:border-slate-800">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-slate-100">ข้อมูลตามปี</h2>
 
-          <div>
-            <label class="mb-1 block text-sm font-semibold text-slate-800">
-              คำอธิบาย <span class="text-red-500">*</span>
-            </label>
-            <input
-              type="text" name="description" required
-              placeholder="เช่น งานขนส่งโครงการ A"
-              class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-500
-                     focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600">
-          </div>
+          <div class="flex items-center space-x-3">
+            <label class="text-sm font-medium text-gray-700 dark:text-slate-300">เลือกปี:</label>
+            <select [(ngModel)]="selectedYear" (ngModelChange)="onChangeYear($event)"
+                    class="bg-gray-50 text-gray-900 border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                           dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700">
+              <option *ngFor="let year of years" [value]="year">{{ year }}</option>
+            </select>
 
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label class="mb-1 block text-sm font-semibold text-slate-800">
-                หมวดหมู่ <span class="text-red-500">*</span>
-              </label>
-              <select
-                name="category" required
-                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900
-                       focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600">
-                <option value="ขนส่ง">ขนส่ง</option>
-                <option value="บริการ">บริการ</option>
-                <option value="อื่นๆ">อื่นๆ</option>
-              </select>
+            <label class="text-sm font-medium text-gray-700 dark:text-slate-300">เรียงตาม:</label>
+            <select [(ngModel)]="basis" (ngModelChange)="onChangeBasis($event)"
+                    class="bg-gray-50 text-gray-900 border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                           dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700">
+              <option [ngValue]="'contractDate'">วันที่ทำสัญญา</option>
+              <option [ngValue]="'dueDate'">ครบกำหนด</option>
+              <option [ngValue]="'receivedAt'">วันที่รับเงินจริง</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="space-y-6" *ngIf="selectedYear">
+          <div class="border border-gray-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <div class="bg-gradient-to-r from-gray-50 to-blue-50 dark:from-slate-800 dark:to-slate-800 px-6 py-4 border-b border-gray-200 dark:border-slate-800">
+              <div class="flex items-center space-x-3">
+                <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+                <span class="text-lg font-semibold text-gray-900 dark:text-slate-100">ข้อมูลปี {{ selectedYear }}</span>
+              </div>
             </div>
 
-            <div>
-              <label class="mb-1 block text-sm font-semibold text-slate-800">
-                จำนวนเงิน (บาท) <span class="text-red-500">*</span>
-              </label>
-              <input
-                type="number" name="amount" step="0.01" min="0" required inputmode="decimal"
-                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-right text-sm text-slate-900
-                       focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600">
+            <div class="p-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div *ngFor="let month of months; let i = index"
+                     class="bg-gray-50 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 rounded-lg p-4 cursor-pointer transition-all duration-200 border border-gray-200 dark:border-slate-700 hover:border-blue-300"
+                     (click)="openMonthDetail(selectedYear, month)">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                      <div class="w-8 h-8 bg-white dark:bg-slate-900 rounded-lg flex items-center justify-center">
+                        <svg class="w-4 h-4 text-gray-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                      </div>
+                      <span class="font-medium text-gray-900 dark:text-slate-100">{{ month }}</span>
+                    </div>
+                    <button (click)="$event.stopPropagation(); addIncome(selectedYear, month)"
+                            class="bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1.5 rounded-md font-medium transition-all duration-200">
+                      เพิ่มเอกสาร
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="loadingDocs" class="text-sm text-gray-500 dark:text-slate-400 mt-4">กำลังโหลดรายการ...</div>
             </div>
           </div>
+        </div>
+      </div>
+    </ng-container>
 
-          <!-- ฟิลด์เสริม: ไม่บังคับ (แบ็กเอนด์จะมองข้ามได้) -->
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label class="mb-1 block text-sm font-semibold text-slate-800">วิธีการชำระ</label>
-              <select
-                name="payment_method"
-                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900
-                       focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600">
-                <option value="">— เลือก —</option>
-                <option value="เงินสด">เงินสด</option>
-                <option value="โอน">โอน</option>
-                <option value="เช็ค">เช็ค</option>
-                <option value="อื่นๆ">อื่นๆ</option>
-              </select>
-            </div>
-            <div>
-              <label class="mb-1 block text-sm font-semibold text-slate-800">เลขที่ใบแจ้งหนี้ / อ้างอิง</label>
-              <input
-                type="text" name="invoice_ref" placeholder="เช่น 2025-000123"
-                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-500
-                       focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600">
-            </div>
+    <!-- ===================== MONTH DETAIL VIEW ===================== -->
+    <ng-container *ngIf="view==='monthDetail'">
+      <div class="rounded-2xl shadow-sm border p-6 bg-white border-gray-100 dark:bg-slate-900 dark:border-slate-800">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+          <div class="flex items-center gap-3">
+            <button (click)="backToDashboard()" class="px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-200">← ย้อนกลับ</button>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-slate-100">รายรับ {{ months[chartMonthIndex] }} {{ selectedYear }}</h2>
           </div>
 
-          <div>
-            <label class="mb-1 block text-sm font-semibold text-slate-800">หมายเหตุ</label>
-            <textarea
-              name="note" rows="3" placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"
-              class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-500
-                     focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600"></textarea>
-          </div>
+          <div class="flex items-center gap-3">
+            <select [(ngModel)]="chartMonthIndex" (ngModelChange)="onChangeMonthInDetail($event)"
+                    class="bg-gray-50 text-gray-900 border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                           dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700">
+              <option *ngFor="let m of months; let i = index" [ngValue]="i">{{ m }}</option>
+            </select>
 
-          <div>
-            <label class="mb-1 block text-sm font-semibold text-slate-800">รูป/ไฟล์สัญญา (ถ้ามี)</label>
-            <!-- ต้องใช้ชื่อ contract_image ให้ตรงกับ multer.single('contract_image') -->
-            <input
-              type="file" name="contract_image" accept="image/*,.pdf"
-              class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900
-                     file:mr-3 file:rounded-md file:border-0 file:bg-blue-600 file:px-3 file:py-2 file:text-white
-                     hover:file:bg-blue-700 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600">
-            <p class="mt-1 text-xs text-slate-600">รองรับ JPG/PNG/PDF ขนาดไม่เกิน ~10MB</p>
-          </div>
+            <select [(ngModel)]="filterStatus" (ngModelChange)="applyStatusFilter()"
+                    class="bg-gray-50 text-gray-900 border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                           dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700">
+              <option value="ALL">ทั้งหมด</option>
+              <option value="PENDING">รอดำเนินการ</option>
+              <option value="OVERDUE">เกินกำหนด</option>
+              <option value="PAID">รับครบแล้ว</option>
+              <option value="PARTIAL">รับบางส่วน</option>
+            </select>
 
-          <div class="flex gap-3 pt-2">
-            <button type="button" (click)="closePopup()"
-                    class="flex-1 rounded-lg border border-slate-300 px-4 py-2 font-medium text-slate-800 hover:bg-slate-100">
-              ยกเลิก
-            </button>
-            <button type="submit"
-                    class="flex-1 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700">
-              บันทึกรายได้
-            </button>
+            <select [(ngModel)]="basis" (ngModelChange)="onChangeBasis($event)"
+                    class="bg-gray-50 text-gray-900 border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                           dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700">
+              <option [ngValue]="'contractDate'">วันที่ทำสัญญา</option>
+              <option [ngValue]="'dueDate'">ครบกำหนด</option>
+              <option [ngValue]="'receivedAt'">วันที่รับเงินจริง</option>
+            </select>
+
+            <button (click)="addIncome(selectedYear, months[chartMonthIndex])"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium">เพิ่มเอกสาร</button>
           </div>
-        </form>
-      </ng-template>
+        </div>
+
+        <div class="overflow-x-auto mt-2">
+          <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-800">
+            <thead class="bg-gray-50 dark:bg-slate-800">
+              <tr class="text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">
+                <th class="px-4 py-3">เลขที่</th>
+                <th class="px-4 py-3">ลูกค้า</th>
+                <th class="px-4 py-3">วันที่</th>
+                <th class="px-4 py-3">ครบกำหนด</th>
+                <th class="px-4 py-3 text-right">ยอดรวม</th>
+                <th class="px-4 py-3">สถานะ</th>
+                <th class="px-4 py-3">รายละเอียด</th>
+                <th class="px-4 py-3">ทำรายการ</th>
+              </tr>
+            </thead>
+
+            <tbody class="bg-white dark:bg-slate-900 divide-y divide-gray-100 dark:divide-slate-800">
+              <ng-container *ngFor="let inc of filteredIncomes">
+                <tr class="hover:bg-gray-50 dark:hover:bg-slate-800">
+                  <td class="px-4 py-3 font-medium text-gray-900 dark:text-slate-100">{{ inc.receiptNo }}</td>
+                  <td class="px-4 py-3 text-gray-700 dark:text-slate-200">{{ inc.customerName || '-' }}</td>
+                  <td class="px-4 py-3 text-gray-700 dark:text-slate-200">{{ inc.contractDate | date:'yyyy-MM-dd' }}</td>
+                  <td class="px-4 py-3 text-gray-700 dark:text-slate-200">{{ inc.dueDate ? (inc.dueDate | date:'yyyy-MM-dd') : '-' }}</td>
+                  <td class="px-4 py-3 text-right text-gray-900 dark:text-slate-100">{{ toAmountNumber(inc.amount) | number:'1.0-0' }} บาท</td>
+                  <td class="px-4 py-3">
+                    <span [ngClass]="statusBadgeClass(inc.status)" class="px-2.5 py-1 rounded-full text-xs font-semibold">
+                      {{ statusLabel(inc.status) }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <button (click)="toggleOpen(inc.id)" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                      {{ opened[inc.id] ? 'ปิด' : 'เปิด' }}
+                    </button>
+                  </td>
+
+                  <!-- ทำรายการ -->
+                  <td class="px-4 py-3">
+                    <!-- โหมดปกติ -->
+                    <ng-container *ngIf="!editingMode; else editBtns">
+                      <button *ngIf="inc.status !== 'PAID'"
+                              (click)="openReceive(inc)"
+                              class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm">
+                        รับเงิน
+                      </button>
+                      <span *ngIf="inc.status === 'PAID'" class="text-xs text-gray-500 dark:text-slate-400">รับครบแล้ว</span>
+                    </ng-container>
+
+                    <!-- โหมดแก้ไข -->
+                    <ng-template #editBtns>
+                      <div class="flex items-center justify-start space-x-2">
+                        <button type="button"
+                                (click)="openEdit(inc); $event.stopPropagation()"
+                                class="w-8 h-8 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg flex items-center justify-center transition-colors
+                                       dark:bg-blue-900/30 dark:hover:bg-blue-900/40 dark:text-blue-200">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                          </svg>
+                        </button>
+                        <button type="button"
+                                (click)="confirmDelete(inc); $event.stopPropagation()"
+                                class="w-8 h-8 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg flex items-center justify-center transition-colors
+                                       dark:bg-red-900/30 dark:hover:bg-red-900/40 dark:text-red-200">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </ng-template>
+                  </td>
+                </tr>
+
+                <tr *ngIf="opened[inc.id]">
+                  <td colspan="8" class="bg-gray-50 dark:bg-slate-800 px-6 py-4">
+                    <div class="grid md:grid-cols-3 gap-4 text-sm">
+                      <div><span class="text-gray-500 dark:text-slate-400">รายละเอียด:</span> <span class="text-gray-800 dark:text-slate-200">{{ inc.description || '-' }}</span></div>
+                      <div><span class="text-gray-500 dark:text-slate-400">สถานะ:</span> <span class="text-gray-800 dark:text-slate-200">{{ statusLabel(inc.status) }}</span></div>
+                      <div><span class="text-gray-500 dark:text-slate-400">รับครบเมื่อ:</span> <span class="text-gray-800 dark:text-slate-200">{{ inc.receivedAt ? (inc.receivedAt | date:'yyyy-MM-dd') : '-' }}</span></div>
+                      <div><span class="text-gray-500 dark:text-slate-400">รับแล้ว:</span>  <span class="text-gray-800 dark:text-slate-200">{{ toAmountNumber(inc.paidAmount) | number:'1.0-0' }} บาท</span></div>
+                      <div><span class="text-gray-500 dark:text-slate-400">คงเหลือ:</span> <span class="text-gray-800 dark:text-slate-200">{{ getRemaining(inc) | number:'1.0-0' }} บาท</span></div>
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
+
+              <tr *ngIf="!loadingDocs && filteredIncomes.length === 0">
+                <td colspan="8" class="px-4 py-6 text-center text-sm text-gray-500 dark:text-slate-400">ยังไม่มีเอกสารรายรับในเดือนนี้</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
+<!-- ===== Modal: Create/Edit Income ===== -->
+<div *ngIf="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center">
+  <div class="absolute inset-0 bg-black/40" (click)="closeCreate()"></div>
+  <div class="relative bg-white dark:bg-slate-900 dark:text-slate-100 w-full max-w-2xl rounded-xl shadow-xl border border-gray-100 dark:border-slate-800">
+    <div class="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between">
+      <h4 class="text-lg font-semibold"> {{ editingId ? 'แก้ไขเอกสารรายรับ' : 'สร้างเอกสารรายรับ' }} </h4>
+      <button (click)="closeCreate()" class="text-gray-500 dark:text-slate-300 hover:text-gray-700 dark:hover:text-white">&times;</button>
     </div>
+
+    <form (ngSubmit)="submitCreate()" class="p-6 space-y-4">
+      <div class="grid md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-slate-300">เลขที่เอกสาร *</label>
+          <input [(ngModel)]="newIncome.receiptNo" name="receiptNo" type="text" required
+                 class="w-full rounded-lg border px-3 py-2 bg-white text-gray-900 border-gray-300 placeholder-gray-400
+                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                        dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 dark:placeholder-slate-400" />
+          <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">เช่น {{ receiptNoHint }}</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-slate-300">ชื่อลูกค้า</label>
+          <input [(ngModel)]="newIncome.customerName" name="customerName" type="text"
+                 class="w-full rounded-lg border px-3 py-2 bg-white text-gray-900 border-gray-300 placeholder-gray-400
+                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                        dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 dark:placeholder-slate-400" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-slate-300">วันที่ทำสัญญา *</label>
+          <input [(ngModel)]="newIncome.contractDate" name="contractDate" type="date" required
+                 class="w-full rounded-lg border px-3 py-2 bg-white text-gray-900 border-gray-300
+                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                        dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-slate-300">ครบกำหนด</label>
+          <input [(ngModel)]="newIncome.dueDate" name="dueDate" type="date"
+                 class="w-full rounded-lg border px-3 py-2 bg-white text-gray-900 border-gray-300
+                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                        dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-slate-300">ยอดรวม (บาท) *</label>
+          <input [(ngModel)]="newIncome.amount" name="amount" type="number" min="0" step="0.01" required
+                 class="w-full rounded-lg border px-3 py-2 bg-white text-gray-900 border-gray-300 placeholder-gray-400
+                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                        dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 dark:placeholder-slate-400" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-slate-300">รายละเอียด</label>
+          <textarea [(ngModel)]="newIncome.description" name="description" rows="3"
+                    class="w-full rounded-lg border px-3 py-2 bg-white text-gray-900 border-gray-300 placeholder-gray-400
+                           focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                           dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 dark:placeholder-slate-400"></textarea>
+        </div>
+      </div>
+
+      <div *ngIf="createError" class="bg-red-50 dark:bg-rose-900/20 border border-red-200 dark:border-rose-800 text-red-700 dark:text-rose-300 px-3 py-2 rounded-lg text-sm">
+        {{ createError }}
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button type="button" (click)="closeCreate()" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50
+               dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">ยกเลิก</button>
+        <button type="submit" [disabled]="creating" class="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60">
+          {{ creating ? 'กำลังบันทึก...' : (editingId ? 'บันทึกการแก้ไข' : 'บันทึก') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Modal: รับเงิน (งวด) ===== -->
+<div *ngIf="showReceiveModal" class="fixed inset-0 z-50 flex items-center justify-center">
+  <div class="absolute inset-0 bg-black/40" (click)="closeReceive()"></div>
+  <div class="relative bg-white dark:bg-slate-900 dark:text-slate-100 w-full max-w-lg rounded-xl shadow-xl border border-gray-100 dark:border-slate-800">
+    <div class="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between">
+      <h4 class="text-lg font-semibold">รับเงินเอกสารรายรับ</h4>
+      <button (click)="closeReceive()" class="text-gray-500 dark:text-slate-300 hover:text-gray-700 dark:hover:text-white">&times;</button>
+    </div>
+
+    <form (ngSubmit)="submitReceive()" class="p-6 space-y-4">
+      <div class="grid md:grid-cols-2 gap-4">
+        <div>
+          <div class="text-xs text-gray-500 dark:text-slate-400 mb-1">เลขที่เอกสาร</div>
+          <div class="font-medium text-gray-900 dark:text-slate-100">{{ receiveTarget?.receiptNo }}</div>
+        </div>
+        <div>
+          <label class="block text-sm mb-1 text-gray-700 dark:text-slate-300">วันที่รับเงิน *</label>
+          <input type="date" [(ngModel)]="receiveForm.receivedAt" name="receivedAt" required
+                 class="w-full rounded-lg border px-3 py-2 bg-white text-gray-900 border-gray-300
+                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                        dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700">
+        </div>
+        <div>
+          <label class="block text-sm mb-1 text-gray-700 dark:text-slate-300">ยอดรับ (บาท) *</label>
+          <input type="number" min="0" step="0.01" [(ngModel)]="receiveForm.amount" name="amount" required
+                 [max]="receiveTarget ? getRemaining(receiveTarget) : null"
+                 class="w-full rounded-lg border px-3 py-2 bg-white text-gray-900 border-gray-300 placeholder-gray-400
+                        focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500
+                        dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 dark:placeholder-slate-400">
+          <div class="text-xs text-gray-500 dark:text-slate-400 mt-1">
+            ยอดรวม: {{ toAmountNumber(receiveTarget?.amount) | number:'1.0-0' }} |
+            รับแล้ว: {{ toAmountNumber(receiveTarget?.paidAmount) | number:'1.0-0' }} |
+            คงเหลือ: {{ receiveTarget ? getRemaining(receiveTarget) : 0 | number:'1.0-0' }}
+          </div>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm mb-1 text-gray-700 dark:text-slate-300">คำอธิบาย</label>
+          <input type="text" [(ngModel)]="receiveForm.description" name="description"
+                 class="w-full rounded-lg border px-3 py-2 bg-white text-gray-900 border-gray-300 placeholder-gray-400
+                        focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500
+                        dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 dark:placeholder-slate-400">
+        </div>
+      </div>
+
+      <div *ngIf="receiveError" class="bg-red-50 dark:bg-rose-900/20 border border-red-200 dark:border-rose-800 text-red-700 dark:text-rose-300 px-3 py-2 rounded-lg text-sm">
+        {{ receiveError }}
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button type="button" (click)="closeReceive()" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50
+               dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">ยกเลิก</button>
+        <button type="submit" [disabled]="receiving"
+                class="px-5 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60">
+          {{ receiving ? 'กำลังบันทึก...' : 'ยืนยันรับเงิน' }}
+        </button>
+      </div>
+    </form>
   </div>
 </div>

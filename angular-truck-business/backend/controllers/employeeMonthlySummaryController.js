@@ -1,5 +1,7 @@
 // backend/controllers/employeeMonthlySummaryController.js
 import { PrismaClient } from '@prisma/client';
+import { monthRangeUTC } from '../utils/date.js';
+
 const prisma = new PrismaClient();
 
 /** เลือกฟิลด์พนักงานที่อยากติดมาด้วยเวลา include */
@@ -100,6 +102,110 @@ export const createMonthlySummary = async (req, res) => {
   }
 };
 
+// คำนวณสรุปรายเดือนจาก EDS (ไม่แตะตาราง summary เว้นแต่ส่ง upsert=1)
+export const computeMonthlyFromEDS = async (req, res) => {
+  try {
+    const year = Number(req.query.year);
+    const month = Number(req.query.month); // 1..12
+    const employeeId = req.query.employeeId ? String(req.query.employeeId) : undefined;
+    const doUpsert = req.query.upsert === '1' || req.query.upsert === 'true';
+
+    if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+      return res.status(400).json({ error: 'year และ month ต้องระบุให้ถูกต้อง' });
+    }
+
+    const { start, end } = monthRangeUTC(year, month);
+
+    // รายชื่อพนักงาน (จำกัดเฉพาะคนที่ขอ ถ้ามี)
+    const employees = await prisma.employee.findMany({
+      where: employeeId ? { id: employeeId } : undefined,
+      select: { id: true, name: true },
+      orderBy: { id: 'asc' },
+    });
+    if (employees.length === 0) return res.json([]);
+
+    // ดึง EDS ของเดือนนี้ + arrival_detail
+    const eds = await prisma.employeeDayStatus.findMany({
+      where: {
+        work_date: { gte: start, lt: end },
+        ...(employeeId ? { employee_id: employeeId } : {}),
+      },
+      select: {
+        employee_id: true,
+        work_date: true,
+        status: true,           // WORKING | OFF_DUTY | ON_LEAVE | ABSENT | NOT_CHECKED_IN
+        arrival_detail: true,   // ON_TIME | LATE | null
+      },
+    });
+
+    // เตรียม accumulator ต่อพนักงาน
+    const accByEmp = new Map(
+      employees.map(e => [e.id, {
+        employee_id: e.id,
+        year,
+        month,
+        planned_days: 0,
+        present_days: 0,
+        late_days: 0,
+        absent_days: 0,
+        leave_days: 0,
+        work_hours: null,
+        on_time_rate: 0,
+      }])
+    );
+
+    for (const r of eds) {
+      const acc = accByEmp.get(r.employee_id);
+      if (!acc) continue;
+
+      if (r.status === 'WORKING' || r.status === 'OFF_DUTY') {
+        acc.present_days += 1;
+        if (r.arrival_detail === 'LATE') acc.late_days += 1;
+      } else if (r.status === 'ON_LEAVE') {
+        acc.leave_days += 1;
+      } else if (r.status === 'ABSENT') {
+        acc.absent_days += 1;
+      }
+    }
+
+    // planned_days = วันที่มีแผน/มีผลลัพธ์ (present + leave + absent)
+    for (const r of accByEmp.values()) {
+      r.planned_days = r.present_days + r.leave_days + r.absent_days;
+      const denom = r.present_days;
+      const ontime = r.present_days - r.late_days;
+      r.on_time_rate = denom > 0 ? Number(((ontime * 100) / denom).toFixed(2)) : 0;
+    }
+
+    const result = Array.from(accByEmp.values());
+
+    // ถ้าส่ง upsert=1 จะเขียนทับลงตาราง EmployeeMonthlySummary ด้วย
+    if (doUpsert) {
+      await prisma.$transaction(result.map(r =>
+        prisma.employeeMonthlySummary.upsert({
+          where: { employee_id_year_month: { employee_id: r.employee_id, year: r.year, month: r.month } },
+          create: r,
+          update: {
+            planned_days: r.planned_days,
+            present_days: r.present_days,
+            late_days: r.late_days,
+            absent_days: r.absent_days,
+            leave_days: r.leave_days,
+            on_time_rate: r.on_time_rate,
+            work_hours: r.work_hours,
+          },
+        })
+      ));
+    }
+
+    return res.json(result);
+  } catch (err) {
+    console.error('[computeMonthlyFromEDS]', err);
+    return res.status(500).json({ error: 'Failed to compute monthly summary' });
+  }
+};
+
+
+
 /** PUT /api/monthly-summaries/:id
  *  อนุญาตอัปเดตแบบ partial (ใส่มาเฉพาะที่อยากแก้)
  */
@@ -178,4 +284,6 @@ export const employeeMonthlySummaryByYear = async (req, res) => {
     console.error('[employeeMonthlySummaryByYear]', err);
     res.status(500).json({ error: 'Failed to fetch monthly summaries for year' });
   }
+
 };
+

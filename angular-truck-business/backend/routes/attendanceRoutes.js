@@ -9,6 +9,8 @@ import {
   getYears,
   getMonthSummary,
   getEmployeeHistory,
+  checkOutByEmployeeAndDate,
+
 } from '../controllers/attendanceController.js';
 
 const router = express.Router();
@@ -24,5 +26,10 @@ router.post('/', createAttendance);
 router.get('/:id', getAttendanceById);
 router.put('/:id', updateAttendance);
 router.delete('/:id', deleteAttendance);
+
+// ---------- check-out by employeeId and date (query param) ----------
+router.post('/check-out', checkOutByEmployeeAndDate);
+
+
 
 export default router;

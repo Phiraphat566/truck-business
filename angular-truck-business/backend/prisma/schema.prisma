@@ -12,6 +12,7 @@ enum DayStatus {
   WORKING
   OFF_DUTY
   ON_LEAVE
+  ABSENT 
 }
 
 enum DaySource {
@@ -53,7 +54,7 @@ model Employee {
 }
 
 model Attendance {
-  id            String        @id @map("attendance_id")
+  id            String        @id @map("attendance_id") @default(cuid()) // <— เพิ่ม default
   employee_id   String
   work_date     DateTime      @db.Date        // วันที่ทำงาน
   check_in      DateTime      @db.DateTime(0) // เวลาที่หัวหน้าใส่
@@ -211,17 +212,25 @@ model TravelCost {
 }
 
 model Income {
-  id                  Int      @id @default(autoincrement())
-  income_date         DateTime @db.Date
-  description         String?
-  category            String?
-  amount              Decimal  @db.Decimal(10,2)
-  contract_image_path String?
-  created_at          DateTime @default(now())
+  id                  Int            @id @default(autoincrement())
+  receiptNo           String         @unique
+  customerName        String?
+  contractDate        DateTime
+  dueDate             DateTime?
+  amount              Decimal        @db.Decimal(12, 2)
+  status              InvoiceStatus  @default(PENDING)
+  receivedAt          DateTime?
+  createdAt           DateTime       @default(now()) @db.DateTime(0)
+  description         String?        @db.Text
+  category            String?        @db.VarChar(100)
+  contract_image_path String?        @db.VarChar(255)
 
-  // (ถ้ามีฟิลด์ invoice_id อยู่แล้ว สามารถคงไว้ชั่วคราว/ค่อยถอดทีหลังได้)
-  // invoice_id       Int?
-  // invoice          Invoice? @relation(fields: [invoice_id], references: [id], onDelete: SetNull)
+  payments            PaymentRecord[]   // ← ใช้ตารางเดียวกับ Invoice
+
+  @@index([contractDate], map: "idx_income_contractDate")
+  @@index([dueDate],      map: "idx_income_dueDate")
+  @@index([status],       map: "idx_income_status")
+  @@index([createdAt],    map: "idx_income_createdAt")
 }
 
 model Invoice {
@@ -230,7 +239,7 @@ model Invoice {
   customerName String
   contractDate DateTime
   dueDate      DateTime
-  amount      Decimal          @db.Decimal(10,2)
+  amount      Decimal          @db.Decimal(12,2)
   status      InvoiceStatus    @default(PENDING)
   paidAt      DateTime?
   createdAt   DateTime         @default(now())
@@ -241,14 +250,20 @@ model Invoice {
 model PaymentRecord {
   id           Int      @id @default(autoincrement())
   payment_date DateTime @db.Date
-  amount       Decimal  @db.Decimal(10,2)
+  amount       Decimal  @db.Decimal(12, 2)
   description  String?
-  category     String?  // เช่น 'BILL'
+  category     String?  @db.VarChar(50) // เช่น 'INVOICE','INCOME','CASH','TRANSFER'
+  created_at   DateTime @default(now()) @db.DateTime(0)
 
-  created_at   DateTime @default(now())
+  // ใช้อย่างใดอย่างหนึ่งเท่านั้น
+  invoice_id   Int?
+  invoice      Invoice? @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
 
-  invoice_id   Int
-  invoice      Invoice  @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  income_id    Int?
+  income       Income?  @relation(fields: [income_id], references: [id], onDelete: Cascade)
+
+  @@index([invoice_id], map: "idx_payment_invoice")
+  @@index([income_id],  map: "idx_payment_income")
 }
 
 
@@ -268,16 +283,24 @@ model Staff {
 }
 
 model EmployeeDayStatus {
-  employee_id String
-  work_date   DateTime  @db.Date
-  status      DayStatus
-  updated_at  DateTime  @default(now()) @db.DateTime(0)
-  Employee    Employee  @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+  employee_id    String
+  work_date      DateTime  @db.Date
+  status         DayStatus
+  source         DaySource @default(SYSTEM)
+  updated_at     DateTime  @default(now()) @db.DateTime(0)
+
+  // NEW: เก็บผล ON_TIME / LATE สำหรับวันที่ WORKING/OFF_DUTY
+  arrival_detail ArrivalStatus?
+
+  Employee Employee  @relation(fields: [employee_id], references: [id], onDelete: Cascade)
 
   @@id([employee_id, work_date])
   @@index([status])
   @@index([work_date], map: "idx_eds_work_date")
+  @@index([source])
+  @@index([arrival_detail]) // ช่วยคำนวณ % เร็ว
 }
+
 
 model LeaveRequest {
   leave_id    Int      @id @default(autoincrement())
@@ -311,3 +334,9 @@ model InvoiceYear {
   @@map("InvoiceYear")
 }
 
+model IncomeYear {
+  year       Int      @id
+  created_at DateTime @default(now()) @db.DateTime(0)
+
+  @@map("IncomeYear")
+}

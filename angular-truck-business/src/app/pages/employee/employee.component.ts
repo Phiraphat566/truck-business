@@ -1,14 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { interval, Subscription } from 'rxjs';
-import { OnDestroy } from '@angular/core';
+import { firstValueFrom, interval, Subscription } from 'rxjs';
 
-
-//  type สำหรับ API 
+// ===== types จาก API =====
 type ApiEmployee = {
   id: string;
   name: string;
@@ -18,13 +15,13 @@ type ApiEmployee = {
   profileImagePath?: string | null;
 };
 
+type DayStatus = 'NOT_CHECKED_IN' | 'WORKING' | 'OFF_DUTY' | 'ON_LEAVE' | 'ABSENT';
+
 type ApiDayStatus = {
   employee_id: string;
-  status: DayStatus; // 'NOT_CHECKED_IN' | 'WORKING' | 'OFF_DUTY' | 'ON_LEAVE'
+  status: DayStatus;
+  // arrival_detail?: 'ON_TIME' | 'LATE' | null; // เผื่อใช้ในอนาคต
 };
-
-type DayStatus = 'NOT_CHECKED_IN' | 'WORKING' | 'OFF_DUTY' | 'ON_LEAVE';
-
 
 interface Employee {
   id?: string;
@@ -46,17 +43,29 @@ interface Employee {
   styleUrls: ['./employee.component.css'],
   imports: [RouterModule, FormsModule, CommonModule, HttpClientModule],
 })
-
-
 export class EmployeeComponent implements OnInit, OnDestroy {
-
   private pollSub?: Subscription;
+
   showDeleteConfirm = false;
   deleteIndex: number | null = null;
   showToast = false;
   toastMessage = '';
   isLoading = false;
+
   isDark = localStorage.getItem('theme') === 'dark';
+  searchTerm = '';
+
+  showPopup = false;
+  editingMode = false;
+  form: Partial<Employee> = {};
+  showDetailPopup = false;
+  selectedEmployee: Employee | null = null;
+
+  currentIndex = 0;
+  employees: Employee[] = [];
+
+  // ===== lifecycle =====
+  constructor(private http: HttpClient) {}
 
   ngOnInit() {
     this.applyTheme();
@@ -68,45 +77,23 @@ export class EmployeeComponent implements OnInit, OnDestroy {
     this.pollSub?.unsubscribe();
   }
 
-
+  // ===== theme =====
   toggleTheme() {
     this.isDark = !this.isDark;
     this.applyTheme();
   }
-
   private applyTheme() {
-    const root = document.documentElement; // <html>
+    const root = document.documentElement;
     root.classList.toggle('dark', this.isDark);
     localStorage.setItem('theme', this.isDark ? 'dark' : 'light');
   }
 
-  searchTerm = '';
-
-  showPopup = false;
-  editingMode = false;
-  form: Partial<Employee> = {};
-  showDetailPopup = false;
-  selectedEmployee: Employee | null = null;
-
-  currentIndex = 0;
-
-  // 1) ลบ mock ออก และเริ่มเป็นอาร์เรย์ว่าง
-  employees: Employee[] = [];
-
-  // 2) ป้องกันตอนยังไม่มีรายการ
-  get currentEmployee(): Employee | null {
-    return this.employees[this.currentIndex] ?? null;
-  }
-
-  // การ์ดสรุป
+  // ===== summary cards =====
   get totalEmployees(): number { return this.employees.length; }
-  
-  get workingCount(): number {
-  return this.employees.filter(e => e.status === 'WORKING').length;
-}
+  get workingCount(): number { return this.employees.filter(e => e.status === 'WORKING').length; }
   get leaveCount(): number { return this.employees.filter(e => e.status === 'ON_LEAVE').length; }
 
-  // รายการที่แสดง
+  // ===== list filter =====
   get filteredEmployees(): Employee[] {
     const term = (this.searchTerm || '').trim().toLowerCase();
     if (!term) return this.employees;
@@ -119,47 +106,40 @@ export class EmployeeComponent implements OnInit, OnDestroy {
     );
   }
 
+  // ===== CRUD UI helpers =====
   confirmDelete(index: number) {
     this.deleteIndex = index;
     this.showDeleteConfirm = true;
   }
 
   async deleteEmployee(index: number) {
-  this.isLoading = true;
-  try {
-    const id = this.employees[index]?.id!;
-    await firstValueFrom(this.http.delete(`${this.apiBase}/employees/${id}`));
-
-    this.employees.splice(index, 1);
-    this.toastMessage = 'ลบข้อมูลพนักงานเรียบร้อยแล้ว';
-  } catch (err) {
-    console.error(err);
-    this.toastMessage = 'ลบไม่สำเร็จ';
-  } finally {
-    this.isLoading = false;
-    this.showDeleteConfirm = false;
-    this.deleteIndex = null;
-    this.showToast = true;
-    setTimeout(() => (this.showToast = false), 3000);
+    this.isLoading = true;
+    try {
+      const id = this.employees[index]?.id!;
+      await firstValueFrom(this.http.delete(`${this.apiBase}/employees/${id}`));
+      this.employees.splice(index, 1);
+      this.toastMessage = 'ลบข้อมูลพนักงานเรียบร้อยแล้ว';
+    } catch (err) {
+      console.error(err);
+      this.toastMessage = 'ลบไม่สำเร็จ';
+    } finally {
+      this.isLoading = false;
+      this.showDeleteConfirm = false;
+      this.deleteIndex = null;
+      this.showToast = true;
+      setTimeout(() => (this.showToast = false), 3000);
+    }
   }
-}
-
 
   openEditPopupFor(index: number) {
-  this.currentIndex = index;
-  this.editingMode = true;
-  this.form = { ...this.employees[index] };
-  this.selectedFile = null;
-  // ถ้ามีรูปเดิม ให้แสดงพรีวิวจาก URL เดิม
-  this.imagePreview = this.form.imageUrl ?? null;
-  this.showPopup = true;
- }
-
-  nextEmployee() {
-    if (this.currentIndex < this.employees.length - 1) this.currentIndex++;
+    this.currentIndex = index;
+    this.editingMode = true;
+    this.form = { ...this.employees[index] };
+    this.selectedFile = null;
+    this.imagePreview = this.form.imageUrl ?? null;
+    this.showPopup = true;
   }
 
-  // 3) กันเปิด edit ตอนยังไม่มีรายการ
   openEditPopup() {
     if (!this.employees.length) return;
     this.editingMode = true;
@@ -177,56 +157,48 @@ export class EmployeeComponent implements OnInit, OnDestroy {
 
   closePopup() { this.showPopup = false; }
 
- async submitForm() {
-  this.isLoading = true;
-  try {
-    if (this.editingMode) {
-      // UPDATE
-      const id = this.form.id!;
-      await firstValueFrom(
-        this.http.put<ApiEmployee>(`${this.apiBase}/employees/${id}`, this.toApi(this.form))
-      );
-
-      if (this.selectedFile) {
-        await this.uploadPhoto(id, this.selectedFile);
-      }
-
-      await this.loadEmployees();
-      this.toastMessage = 'แก้ไขข้อมูลพนักงานเรียบร้อยแล้ว';
-    } else {
-      // CREATE
-      const created = await firstValueFrom(
-        this.http.post<ApiEmployee>(`${this.apiBase}/employees`, this.toApi(this.form))
-      );
-
-      if (this.selectedFile) {
-        await this.uploadPhoto(created.id, this.selectedFile);
-      }
-
-      await this.loadEmployees();
-      this.toastMessage = 'เพิ่มพนักงานใหม่เรียบร้อยแล้ว';
-    }
-
-    this.closePopup();
-    this.showToast = true;
-    setTimeout(() => (this.showToast = false), 3000);
-  } catch (err) {
-    console.error(err);
-    this.toastMessage = 'อัปโหลดหรือบันทึกไม่สำเร็จ';
-    this.showToast = true;
-    setTimeout(() => (this.showToast = false), 3000);
-  } finally {
-    this.isLoading = false;
+  nextEmployee() {
+    if (this.currentIndex < this.employees.length - 1) this.currentIndex++;
   }
-}
 
+  async submitForm() {
+    this.isLoading = true;
+    try {
+      if (this.editingMode) {
+        const id = this.form.id!;
+        await firstValueFrom(
+          this.http.put<ApiEmployee>(`${this.apiBase}/employees/${id}`, this.toApi(this.form))
+        );
+        if (this.selectedFile) await this.uploadPhoto(id, this.selectedFile);
+        await this.loadEmployees();
+        this.toastMessage = 'แก้ไขข้อมูลพนักงานเรียบร้อยแล้ว';
+      } else {
+        const created = await firstValueFrom(
+          this.http.post<ApiEmployee>(`${this.apiBase}/employees`, this.toApi(this.form))
+        );
+        if (this.selectedFile) await this.uploadPhoto(created.id, this.selectedFile);
+        await this.loadEmployees();
+        this.toastMessage = 'เพิ่มพนักงานใหม่เรียบร้อยแล้ว';
+      }
+      this.closePopup();
+      this.showToast = true;
+      setTimeout(() => (this.showToast = false), 3000);
+    } catch (err) {
+      console.error(err);
+      this.toastMessage = 'อัปโหลดหรือบันทึกไม่สำเร็จ';
+      this.showToast = true;
+      setTimeout(() => (this.showToast = false), 3000);
+    } finally {
+      this.isLoading = false;
+    }
+  }
 
-// helper อัปโหลดรูป (field name = "image" ตรงกับ backend)
-private async uploadPhoto(empId: string, file: File) {
-  const fd = new FormData();
-  fd.append('image', file);
-  await firstValueFrom(this.http.post(`${this.apiBase}/employees/${empId}/photo`, fd));
-}
+  // ===== upload image =====
+  private async uploadPhoto(empId: string, file: File) {
+    const fd = new FormData();
+    fd.append('image', file);
+    await firstValueFrom(this.http.post(`${this.apiBase}/employees/${empId}/photo`, fd));
+  }
 
   exportToExcel() { console.log('Exporting employee data to Excel...'); }
 
@@ -247,166 +219,264 @@ private async uploadPhoto(empId: string, file: File) {
 
   trackByIndex(i: number) { return i; }
 
-  // ขนาดไฟล์สูงสุด 5MB
- maxImageSize = 5 * 1024 * 1024;
- selectedFile: File | null = null;
- imagePreview: string | null = null;
+  // ===== file input =====
+  maxImageSize = 5 * 1024 * 1024;
+  selectedFile: File | null = null;
+  imagePreview: string | null = null;
 
- // ชี้ฐาน URL ของ API ของคุณ (ปรับตามจริง)
- private apiBase = '/api';
+  private apiBase = '/api';
 
- constructor(private http: HttpClient) {}
+  onFileSelected(evt: Event) {
+    const input = evt.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
 
- onFileSelected(evt: Event) {
-  const input = evt.target as HTMLInputElement;
-  const file = input.files?.[0];
-  if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      this.toastMessage = 'กรุณาเลือกไฟล์รูปภาพเท่านั้น';
+      this.showToast = true;
+      setTimeout(() => (this.showToast = false), 2500);
+      return;
+    }
 
-  if (!file.type.startsWith('image/')) {
-    this.toastMessage = 'กรุณาเลือกไฟล์รูปภาพเท่านั้น';
-    this.showToast = true;
-    setTimeout(() => (this.showToast = false), 2500);
-    return;
+    if (file.size > this.maxImageSize) {
+      this.toastMessage = 'ขนาดไฟล์รูปภาพต้องไม่เกิน 5MB';
+      this.showToast = true;
+      setTimeout(() => (this.showToast = false), 2500);
+      return;
+    }
+
+    this.selectedFile = file;
+
+    const reader = new FileReader();
+    reader.onload = () => { this.imagePreview = reader.result as string; };
+    reader.readAsDataURL(file);
   }
 
-  if (file.size > this.maxImageSize) {
-    this.toastMessage = 'ขนาดไฟล์รูปภาพต้องไม่เกิน 5MB';
-    this.showToast = true;
-    setTimeout(() => (this.showToast = false), 2500);
-    return;
+  clearSelectedFile() {
+    this.selectedFile = null;
+    this.imagePreview = null;
   }
 
-  this.selectedFile = file;
+  // ===== map API <-> UI =====
+  private toUi(e: ApiEmployee): Employee {
+    const [firstName, ...rest] = (e.name || '').trim().split(' ');
+    const lastName = rest.join(' ');
+    return {
+      id: e.id,
+      firstName,
+      lastName,
+      position: e.position,
+      phone: e.phone,
+      email: e.email ?? '',
+      imageUrl: e.profileImagePath ?? undefined,
+    };
+  }
 
-  // พรีวิว
-  const reader = new FileReader();
-  reader.onload = () => { this.imagePreview = reader.result as string; };
-  reader.readAsDataURL(file);
- }
+  private toApi(form: Partial<Employee>): Partial<ApiEmployee> {
+    return {
+      name: [form.firstName, form.lastName].filter(Boolean).join(' ').trim(),
+      position: form.position ?? '',
+      phone: form.phone ?? '',
+      email: form.email ?? ''
+    };
+  }
 
- clearSelectedFile() {
-  this.selectedFile = null;
-  this.imagePreview = null;
+  // ===== data load =====
+  async loadEmployees() {
+    try {
+      const apiList = await firstValueFrom(
+        this.http.get<ApiEmployee[]>(`${this.apiBase}/employees`)
+      );
 
-  
-}
+      const date = this.formatYMD();
+      const statusList = await firstValueFrom(
+        this.http.get<ApiDayStatus[]>(
+          `${this.apiBase}/employee-day-status`,
+          { params: { date } }
+        )
+      );
 
-// ===== helper แปลง API -> UI =====
-private toUi(e: ApiEmployee): Employee {
-  const [firstName, ...rest] = (e.name || '').trim().split(' ');
-  const lastName = rest.join(' ');
-  return {
-    id: e.id,
-    firstName,
-    lastName,
-    position: e.position,
-    phone: e.phone,
-    email: e.email ?? '',
-    imageUrl: e.profileImagePath ?? undefined,
-    // status: e.status as any // (ถ้า backend มีค่า status)
+      const statusMap: Record<string, DayStatus> = {};
+      for (const r of statusList) statusMap[r.employee_id] = r.status;
+
+      this.employees = apiList.map(e => {
+        const ui = this.toUi(e);
+        ui.status = statusMap[e.id] ?? 'NOT_CHECKED_IN';
+        return ui;
+      });
+    } catch (err) {
+      console.error(err);
+      this.toastMessage = 'โหลดรายชื่อพนักงานไม่สำเร็จ';
+      this.showToast = true;
+      setTimeout(() => (this.showToast = false), 3000);
+    }
+  }
+
+  private formatYMD(d = new Date()): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dd}`;
+  }
+
+  private formatHM(d = new Date()): string {
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    return `${hh}:${mm}`;
+  }
+
+  private joinLocalDateTime(dYmd: string, hm: string) {
+    const [h, m] = hm.split(':');
+    return `${dYmd}T${h.padStart(2,'0')}:${m.padStart(2,'0')}:00`;
+  }
+
+  async refreshDayStatuses() {
+    try {
+      if (!this.employees.length) return;
+      const date = this.formatYMD();
+      const statusList = await firstValueFrom(
+        this.http.get<ApiDayStatus[]>(
+          `${this.apiBase}/employee-day-status`,
+          { params: { date } }
+        )
+      );
+
+      const statusMap: Record<string, DayStatus> = {};
+      for (const r of statusList) statusMap[r.employee_id] = r.status;
+
+      this.employees = this.employees.map(e => ({
+        ...e,
+        status: statusMap[e.id!] ?? 'NOT_CHECKED_IN'
+      }));
+    } catch (err) {
+      console.error('[refreshDayStatuses]', err);
+    }
+  }
+
+  statusDotClass(s?: DayStatus) {
+    switch (s) {
+      case 'WORKING':        return 'bg-emerald-500 dark:bg-emerald-400';
+      case 'ON_LEAVE':       return 'bg-amber-500  dark:bg-amber-400';
+      case 'OFF_DUTY':       return 'bg-rose-500   dark:bg-rose-400';
+      case 'NOT_CHECKED_IN': return 'bg-sky-400    dark:bg-sky-300';
+      case 'ABSENT':         return 'bg-slate-400  dark:bg-slate-500';
+      default:               return 'bg-slate-400  dark:bg-slate-500';
+    }
+  }
+
+  statusLabel(s?: DayStatus) {
+    switch (s) {
+      case 'WORKING':        return 'กำลังทำงาน';
+      case 'ON_LEAVE':       return 'ลาพัก';
+      case 'OFF_DUTY':       return 'นอกเวลางาน';
+      case 'NOT_CHECKED_IN': return 'ยังไม่เช็คอิน';
+      case 'ABSENT':         return 'ขาดงาน';
+      default:               return 'ไม่ทราบสถานะ';
+    }
+  }
+
+  // ===== Modal เข้างาน/ออกงาน/ลา =====
+  showAtt = false;
+  att: any = {
+    mode: 'IN',               // 'IN' | 'OUT' | 'LEAVE' | 'ABSENT'
+    employeeId: null,
+    date: this.formatYMD(),
+    time: this.formatHM(),
+    arrival: 'ON_TIME',       // เฉพาะ IN
+    // leave only:
+    leave_type: 'PERSONAL',
+    reason: '',
+    approved_by: null
   };
-}
 
-// ===== helper แปลง UI -> API =====
-private toApi(form: Partial<Employee>): Partial<ApiEmployee> {
-  return {
-    name: [form.firstName, form.lastName].filter(Boolean).join(' ').trim(),
-    position: form.position ?? '',
-    phone: form.phone ?? '',
-    email: form.email ?? ''
-  };
-}
-
-
-async loadEmployees() {
-  try {
-    // 1) ดึงรายชื่อพนักงาน
-    const apiList = await firstValueFrom(
-      this.http.get<ApiEmployee[]>(`${this.apiBase}/employees`)
-    );
-
-    // 2) ดึงสถานะของวันนี้ทั้งหมด แล้วทำเป็น map { employee_id: status }
-    const date = this.formatYMD();
-    const statusList = await firstValueFrom(
-      this.http.get<ApiDayStatus[]>(
-        `${this.apiBase}/employee-day-status`,
-        { params: { date } }
-      )
-    );
-    const statusMap: Record<string, DayStatus> = {};
-    for (const r of statusList) statusMap[r.employee_id] = r.status;
-
-    // 3) รวมเข้ากับ UI model (ถ้าไม่มีสถานะ ให้ default เป็น NOT_CHECKED_IN หรือ OFF_DUTY ก็ได้)
-    this.employees = apiList.map(e => {
-      const ui = this.toUi(e);
-      ui.status = statusMap[e.id] ?? 'NOT_CHECKED_IN';
-      return ui;
-    });
-
-  } catch (err) {
-    console.error(err);
-    this.toastMessage = 'โหลดรายชื่อพนักงานไม่สำเร็จ';
-    this.showToast = true;
-    setTimeout(() => (this.showToast = false), 3000);
+  openAttModal(emp?: Employee) {
+    this.att = {
+      mode: 'IN',
+      employeeId: emp?.id ?? null,
+      date: this.formatYMD(),
+      time: this.formatHM(),
+      arrival: 'ON_TIME',
+      leave_type: 'PERSONAL',
+      reason: '',
+      approved_by: null
+    };
+    this.showAtt = true;
   }
-}
 
+  closeAttModal() { this.showAtt = false; }
 
-private formatYMD(d = new Date()): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${dd}`;
-}
+  // ===== submit modal =====
+  async submitAtt() {
+    this.isLoading = true;
+    try {
+      if (!this.att.employeeId) {
+        this.toastMessage = 'กรุณาเลือกพนักงาน';
+        this.showToast = true; setTimeout(()=>this.showToast=false, 2500);
+        return;
+      }
 
-async refreshDayStatuses() {
-  try {
-    if (!this.employees.length) return; // ยังไม่มีรายชื่อ ไม่ต้องโหลดสถานะ
+      if (this.att.mode === 'IN') {
+        const payload = {
+          employeeId: this.att.employeeId,
+          workDate: this.att.date,
+          checkIn: this.joinLocalDateTime(this.att.date, this.att.time),
+          status: this.att.arrival // 'ON_TIME' | 'LATE'
+        };
+        await firstValueFrom(this.http.post(`${this.apiBase}/attendance`, payload));
+        this.toastMessage = 'บันทึก Check-in เรียบร้อย';
+      }
 
-    const date = this.formatYMD();
-    const statusList = await firstValueFrom(
-      this.http.get<ApiDayStatus[]>(
-        `${this.apiBase}/employee-day-status`,
-        { params: { date } }
-      )
-    );
+      if (this.att.mode === 'OUT') {
+        const payload = {
+          employeeId: this.att.employeeId,
+          workDate: this.att.date,
+          checkOut: this.joinLocalDateTime(this.att.date, this.att.time)
+        };
+        await firstValueFrom(this.http.post(`${this.apiBase}/attendance/check-out`, payload));
+        this.toastMessage = 'บันทึก Check-out เรียบร้อย';
+      }
 
-    const statusMap: Record<string, DayStatus> = {};
-    for (const r of statusList) statusMap[r.employee_id] = r.status;
+      if (this.att.mode === 'LEAVE') {
+        const payload = {
+          employee_id: this.att.employeeId,
+          leave_date: this.att.date,
+          leave_type: this.att.leave_type,
+          reason: this.att.reason || null,
+          approved_by: Number(this.att.approved_by || 0)
+        };
+        await firstValueFrom(this.http.post(`${this.apiBase}/leaves`, payload));
+        this.toastMessage = 'บันทึกลางานเรียบร้อย';
+      }
 
-    // อัปเดตเฉพาะ status ของแต่ละคน
-    this.employees = this.employees.map(e => ({
-      ...e,
-      status: statusMap[e.id!] ?? 'NOT_CHECKED_IN'
-    }));
-  } catch (err) {
-    console.error('[refreshDayStatuses]', err);
-    // ปกติไม่ต้องโชว์ toast ทุก 10 วินาที เดี๋ยวรก UI
+      if (this.att.mode === 'ABSENT') {
+        // ✅ ส่ง source: 'MANUAL' ไปด้วย ตาม API ใหม่
+        const payload = {
+          employeeId: this.att.employeeId,
+          date: this.att.date,
+          status: 'ABSENT',
+          source: 'MANUAL'
+        };
+        await firstValueFrom(this.http.post(`${this.apiBase}/employee-day-status/upsert`, payload));
+        this.toastMessage = 'บันทึกขาดงานเรียบร้อย';
+      }
+
+      await this.refreshDayStatuses();
+      this.showToast = true;
+      this.closeAttModal();
+      setTimeout(() => (this.showToast = false), 3000);
+    } catch (err: any) {
+      console.error(err);
+      if (err?.status === 409) {
+        this.toastMessage = 'วันนี้บันทึกซ้ำ: อาจเช็คอินไปแล้ว';
+      } else if (err?.status === 404 && this.att.mode === 'OUT') {
+        this.toastMessage = 'ยังไม่มี Check-in ของวันนี้';
+      } else {
+        this.toastMessage = 'บันทึกไม่สำเร็จ';
+      }
+      this.showToast = true;
+      setTimeout(() => (this.showToast = false), 3000);
+    } finally {
+      this.isLoading = false;
+    }
   }
-}
-
-
-
-statusDotClass(s?: DayStatus) {
-  switch (s) {
-    case 'WORKING':        return 'bg-emerald-400';
-    case 'ON_LEAVE':       return 'bg-amber-400';
-    case 'OFF_DUTY':       return 'bg-rose-400';
-    case 'NOT_CHECKED_IN': return 'bg-gray-400';
-    default:               return 'bg-gray-400';
-  }
-}
-
-statusLabel(s?: DayStatus) {
-  switch (s) {
-    case 'WORKING':        return 'กำลังทำงาน';
-    case 'ON_LEAVE':       return 'ลาพัก';
-    case 'OFF_DUTY':       return 'นอกเวลางาน';
-    case 'NOT_CHECKED_IN': return 'ยังไม่เช็คอิน';
-    default:               return 'ไม่ทราบสถานะ';
-  }
-}
-
-
-
 }

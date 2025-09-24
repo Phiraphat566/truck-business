@@ -6,7 +6,8 @@ import {
   createMonthlySummary,
   updateMonthlySummary,
   deleteMonthlySummary,
-  employeeMonthlySummaryByYear
+  employeeMonthlySummaryByYear,
+  computeMonthlyFromEDS
 } from '../controllers/employeeMonthlySummaryController.js';
 
 const router = express.Router();
@@ -20,5 +21,7 @@ router.get('/:id', getMonthlySummaryById);
 router.post('/', createMonthlySummary);
 router.put('/:id', updateMonthlySummary);
 router.delete('/:id', deleteMonthlySummary);
+
+router.post('/compute-from-eds', computeMonthlyFromEDS); // body: { year, month }
 
 export default router;
