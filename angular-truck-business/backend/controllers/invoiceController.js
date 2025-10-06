@@ -23,6 +23,50 @@ function deriveStatus(inv, paidAmount, now = new Date()) {
   return 'PENDING';                                      // ยังไม่จ่าย และยังไม่เกินกำหนด
 }
 
+
+async function recalcInvoiceStatus(invoiceId) {
+  // ดึงหัวบิล (จำนวนเงิน + dueDate)
+  const head = await prisma.invoice.findUnique({
+    where: { id: invoiceId },
+    select: { amount: true, dueDate: true },
+  });
+  if (!head) {
+    return { status: 'PENDING', paidAmount: 0, remaining: 0, paidAt: null };
+  }
+
+  // รวมยอดที่จ่ายไปแล้ว
+  const agg = await prisma.paymentRecord.aggregate({
+    _sum: { amount: true },
+    where: { invoice_id: invoiceId },
+  });
+  const paidAmount = Number(agg._sum.amount ?? 0);
+
+  // คำนวณสถานะ
+  const status = deriveStatus(head, paidAmount);
+
+  // paidAt = วันที่ชำระล่าสุด ถ้าจ่ายครบ
+  let paidAt = null;
+  if (status === 'PAID') {
+    const last = await prisma.paymentRecord.findFirst({
+      where: { invoice_id: invoiceId },
+      orderBy: { payment_date: 'desc' },
+      select: { payment_date: true },
+    });
+    paidAt = last?.payment_date ?? new Date();
+  }
+
+  // อัปเดตหัวบิล
+  await prisma.invoice.update({
+    where: { id: invoiceId },
+    data: { status, paidAt },
+  });
+
+  const total = Number(head.amount);
+  const remaining = Math.max(total - paidAmount, 0);
+  return { status, paidAmount, remaining, paidAt };
+}
+
+
 /**
  * สร้าง Invoice
  * body: { invoiceNo, customerName, contractDate, dueDate, amount, description }
@@ -31,15 +75,35 @@ export const createInvoice = async (req, res) => {
   try {
     const { invoiceNo, customerName, contractDate, dueDate, amount, description } = req.body;
 
+    if (!invoiceNo) return res.status(400).json({ message: 'invoiceNo is required' });
+
+    const a = Number(amount);
+    if (!Number.isFinite(a) || a <= 0) {
+      return res.status(400).json({ message: 'amount must be a number > 0' });
+    }
+
+    const cDate = new Date(contractDate);
+    if (isNaN(cDate.getTime())) {
+      return res.status(400).json({ message: 'contractDate is invalid' });
+    }
+
+    let dDate = null;
+    if (dueDate != null && dueDate !== '') {
+      const tmp = new Date(dueDate);
+      if (isNaN(tmp.getTime())) {
+        return res.status(400).json({ message: 'dueDate is invalid' });
+      }
+      dDate = tmp;
+    }
+
     const invoice = await prisma.invoice.create({
       data: {
         invoiceNo,
         customerName,
-        contractDate: new Date(contractDate),
-        dueDate: new Date(dueDate),
-        amount,
+        contractDate: cDate,
+        dueDate: dDate,
+        amount: a,
         description: description ?? null,
-        // status = PENDING by default (ตาม schema)
       },
     });
 
@@ -49,6 +113,7 @@ export const createInvoice = async (req, res) => {
     res.status(400).json({ message: 'Cannot create invoice', error: err.message });
   }
 };
+
 
 export const refreshInvoiceStatuses = async (req, res) => {
   try {
@@ -310,7 +375,9 @@ export const createInvoicePayment = async (req, res) => {
   try {
     const id = Number(req.params.id);
     const { amount, paidAt, description } = req.body;
-    if (!amount || Number(amount) <= 0) {
+
+    const add = Number(amount);
+    if (!Number.isFinite(add) || add <= 0) {
       return res.status(400).json({ message: 'amount ต้องมากกว่า 0' });
     }
 
@@ -319,8 +386,6 @@ export const createInvoicePayment = async (req, res) => {
 
     const paid = await sumPaid(id);
     const total = Number(invoice.amount);
-    const add  = Number(amount);
-
     if (paid + add > total) {
       return res.status(400).json({ message: 'ยอดรวมหลังชำระเกินยอดใบแจ้งหนี้' });
     }
@@ -335,16 +400,8 @@ export const createInvoicePayment = async (req, res) => {
       },
     });
 
-    const newPaid = paid + add;
-    const remaining = Math.max(total - newPaid, 0);
-    const nextStatus = newPaid >= total ? 'PAID' : newPaid > 0 ? 'PARTIAL' : 'PENDING';
-
-    await prisma.invoice.update({
-      where: { id },
-      data: { status: nextStatus, paidAt: nextStatus === 'PAID' ? (paidAt ? new Date(paidAt) : new Date()) : null },
-    });
-
-    res.json({ ok: true, paidAmount: newPaid, remaining, status: nextStatus });
+    const stats = await recalcInvoiceStatus(id); // ← ให้ helper สรุปสถานะ + paidAt ล่าสุด
+    return res.json({ ok: true, ...stats });
   } catch (err) {
     console.error('createInvoicePayment error:', err);
     res.status(400).json({ message: 'Cannot create payment', error: err.message });

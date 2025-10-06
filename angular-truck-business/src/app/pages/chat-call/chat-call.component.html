@@ -1,0 +1,246 @@
+<div class="min-h-screen bg-transparent" [class.dark]="isDark">
+  <!-- Header -->
+  <div class="bg-white shadow-sm border-b border-gray-100 dark:bg-slate-900 dark:border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 py-6">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-slate-100">
+            {{ view==='compose' ? 'สั่งงานลง → LINE' : 'ประวัติการเรียกพนักงาน' }}
+          </h1>
+          <p class="text-gray-500 dark:text-slate-400 text-sm" *ngIf="view==='compose'">
+            เรียกใช้พนักงานผ่านไลน์กลุ่ม
+          </p>
+          <p class="text-gray-500 dark:text-slate-400 text-sm" *ngIf="view==='history'">
+            แสดงประวัติทั้งหมด (10 รายการต่อหน้า)
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3 flex-wrap">
+          <button *ngIf="view==='compose'" (click)="goHistory()"
+                  class="px-3 py-2 rounded-lg font-semibold border bg-white text-gray-700 hover:bg-gray-50
+                         dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700">
+            ประวัติการเรียก
+          </button>
+          <button *ngIf="view==='history'" (click)="backToCompose()"
+                  class="px-3 py-2 rounded-lg font-semibold border bg-white text-gray-700 hover:bg-gray-50
+                         dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700">
+            ← กลับไปหน้าส่งงาน
+          </button>
+
+          <!-- สวิตช์ธีม -->
+          <label class="inline-flex items-center gap-3 cursor-pointer select-none">
+            <input type="checkbox" class="sr-only peer" [checked]="isDark" (change)="toggleTheme()" />
+            <div class="relative w-16 h-9 rounded-full transition-colors duration-300 bg-gray-200 peer-checked:bg-emerald-500 border border-gray-300 peer-checked:border-emerald-500">
+              <span class="absolute top-1 left-1 w-7 h-7 rounded-full bg-white transition-transform duration-300 peer-checked:translate-x-7 border border-white"></span>
+            </div>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-4 py-8">
+
+    <!-- ===================== VIEW: COMPOSE (ฟอร์ม + ไทม์ไลน์) ===================== -->
+    <ng-container *ngIf="view==='compose'">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- ซ้าย: ฟอร์ม -->
+        <section class="rounded-2xl shadow-sm border bg-white border-gray-100 dark:bg-slate-900 dark:border-slate-800 p-6">
+          <div class="mb-4 flex items-center justify-between">
+            <div class="text-sm font-semibold text-gray-900 dark:text-slate-100">ข้อมูลงาน</div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs text-gray-500 dark:text-slate-400 mb-1">หัวข้องาน *</label>
+              <input [(ngModel)]="form.title" type="text"
+                     class="w-full rounded-lg border px-3 py-2 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 border-gray-300 dark:border-slate-700"
+                     placeholder="เช่น ไปวิ่งงานที่บ่อทราย">
+            </div>
+
+            <div>
+              <label class="block text-xs text-gray-500 dark:text-slate-400 mb-1">
+                พนักงาน (ใช้บันทึกประวัติ + โชว์ชื่อในข้อความ)
+              </label>
+              <select [(ngModel)]="form.employeeId"
+                      class="w-full rounded-lg border px-3 py-2 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 border-gray-300 dark:border-slate-700">
+                <option value="">— เลือกพนักงาน —</option>
+                <option *ngFor="let e of employees" [value]="e.id">
+                  {{ e.name }} ({{ e.id }})
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs text-gray-500 dark:text-slate-400 mb-1">วัน (ว/ด/ป) *</label>
+              <input [(ngModel)]="form.date" type="date"
+                     class="w-full rounded-lg border px-3 py-2 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 border-gray-300 dark:border-slate-700">
+            </div>
+
+            <div>
+              <label class="block text-xs text-gray-500 dark:text-slate-400 mb-1">เวลา *</label>
+              <input [(ngModel)]="form.time" type="time"
+                     class="w-full rounded-lg border px-3 py-2 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 border-gray-300 dark:border-slate-700">
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block text-xs text-gray-500 dark:text-slate-400 mb-1">สถานที่ *</label>
+              <input [(ngModel)]="form.where" type="text"
+                     class="w-full rounded-lg border px-3 py-2 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 border-gray-300 dark:border-slate-700"
+                     placeholder="เช่น บ่อ 2 / ซอย A">
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block text-xs text-gray-500 dark:text-slate-400 mb-1">รายละเอียดเพิ่มเติม (ไม่บังคับ)</label>
+              <textarea [(ngModel)]="form.note" rows="3"
+                        class="w-full rounded-lg border px-3 py-2 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 border-gray-300 dark:border-slate-700"
+                        placeholder="เช่น ขนให้เสร็จภายใน ..."></textarea>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+            <button (click)="buildPreview()"
+                    class="px-4 py-2 rounded-lg font-semibold bg-sky-500 hover:bg-sky-600 text-white">
+              สร้างตัวอย่างด้านล่าง
+            </button>
+
+            <button (click)="confirmSend()" [disabled]="!canConfirm || sending"
+                    class="px-4 py-2 rounded-lg font-semibold border
+                           bg-gray-50 text-gray-800 border-gray-300 hover:bg-gray-100
+                           dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 dark:hover:bg-slate-700
+                           disabled:opacity-60">
+              {{ sending ? 'กำลังส่ง...' : 'ยืนยันส่งไป LINE' }}
+            </button>
+          </div>
+
+          <!-- Preview -->
+          <div *ngIf="previewVisible" class="mt-5 space-y-3">
+            <div class="text-sm font-semibold text-gray-900 dark:text-slate-100">ตัวอย่างข้อความที่สร้าง</div>
+            <pre class="text-sm rounded-lg border bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-slate-200 border-gray-200 dark:border-slate-700 p-3 whitespace-pre-wrap">{{ previewText }}</pre>
+
+            <div *ngIf="successBanner"
+                 class="rounded-lg border p-3 bg-emerald-50 text-emerald-700 border-emerald-200
+                        dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800">
+              ส่งสำเร็จ ✓ ข้อความถูกส่งไปยัง LINE แล้ว
+            </div>
+
+            <div *ngIf="errorBanner"
+                 class="rounded-lg border p-3 bg-rose-50 text-rose-700 border-rose-200
+                        dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800">
+              {{ errorBanner }}
+            </div>
+          </div>
+        </section>
+
+        <!-- ขวา: ไทม์ไลน์ -->
+        <section class="rounded-2xl shadow-sm border bg-white border-gray-100 dark:bg-slate-900 dark:border-slate-800 p-6">
+          <div class="text-sm font-semibold text-gray-900 dark:text-slate-100 mb-4">ไทม์ไลน์</div>
+          <div id="timeline-scroll"
+               class="h-[520px] overflow-auto rounded-xl border bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 p-3">
+            <div *ngFor="let m of messages" class="my-2" [ngClass]="m.role==='me' ? 'flex justify-end' : 'flex justify-start'">
+              <div class="max-w-[85%] text-sm px-3 py-2 rounded-xl border"
+                   [ngClass]="m.role==='me'
+                      ? 'bg-sky-900/20 border-sky-800/50 text-sky-100'
+                      : 'bg-slate-900/20 border-slate-700 text-slate-100'">
+                <div class="whitespace-pre-wrap">{{ m.text }}</div>
+                <div class="text-[10px] opacity-60 text-right mt-1">{{ m.ts | date:'HH:mm' }}</div>
+              </div>
+            </div>
+
+            <div *ngIf="messages.length===0"
+                 class="h-full flex items-center justify-center text-sm text-gray-500 dark:text-slate-400">
+              เริ่มที่ฟอร์มด้านซ้ายมือ แล้วกด “สร้างตัวอย่างด้านล่าง”
+            </div>
+          </div>
+        </section>
+      </div>
+    </ng-container>
+
+    <!-- ===================== VIEW: HISTORY (ประวัติทั้งหมด + แบ่งหน้า) ===================== -->
+    <ng-container *ngIf="view==='history'">
+      <div class="rounded-2xl shadow-sm border p-6 bg-white border-gray-100 dark:bg-slate-900 dark:border-slate-800">
+
+        <!-- ตัวกรอง -->
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-slate-100">ประวัติทั้งหมด</h2>
+          <div class="flex items-center gap-2">
+            <select [(ngModel)]="historyFilter.employeeId" (ngModelChange)="onFilterChange()"
+                    class="bg-gray-50 text-gray-900 border border-gray-200 rounded-lg px-3 py-2 text-sm
+                           dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700">
+              <option value="">พนักงานทั้งหมด</option>
+              <option *ngFor="let e of employees" [value]="e.id">{{ e.name }} ({{ e.id }})</option>
+            </select>
+            <input [(ngModel)]="historyFilter.q" (ngModelChange)="onFilterChange()" placeholder="ค้นหาข้อความ"
+                   class="bg-gray-50 text-gray-900 border border-gray-200 rounded-lg px-3 py-2 text-sm
+                          dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700" />
+          </div>
+        </div>
+
+        <!-- ตาราง -->
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-800 text-sm">
+            <thead class="bg-gray-50 dark:bg-slate-800">
+              <tr class="text-left">
+                <th class="px-3 py-2">วันที่</th>
+                <th class="px-3 py-2">พนักงาน</th>
+                <th class="px-3 py-2">ข้อความ</th>
+                <th class="px-3 py-2 w-32">จัดการ</th>
+              </tr>
+            </thead>
+
+            <tbody class="bg-white dark:bg-slate-900 divide-y divide-gray-100 dark:divide-slate-800">
+              <tr *ngFor="let c of calls">
+                <td class="px-3 py-2">{{ c.call_date | date:'yyyy-MM-dd' }}</td>
+                <td class="px-3 py-2">{{ c.Employee?.name || c.employee_id }}</td>
+                <td class="px-3 py-2 whitespace-pre-wrap">{{ c.message }}</td>
+                <td class="px-3 py-2">
+                  <div *ngIf="editId!==c.id; else editBtns" class="flex gap-2">
+                    <button (click)="startEdit(c)" class="px-2 py-1 rounded bg-blue-600 text-white">แก้ไข</button>
+                    <button (click)="removeCall(c)" class="px-2 py-1 rounded bg-rose-600 text-white">ลบ</button>
+                  </div>
+                  <ng-template #editBtns>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                      <input [(ngModel)]="editBuf.employeeId" placeholder="EMP001"
+                             class="rounded-lg border px-3 py-2 bg-white dark:bg-slate-800 dark:border-slate-700" />
+                      <input [(ngModel)]="editBuf.callDate" type="date"
+                             class="rounded-lg border px-3 py-2 bg-white dark:bg-slate-800 dark:border-slate-700" />
+                      <input [(ngModel)]="editBuf.message"
+                             class="rounded-lg border px-3 py-2 bg-white dark:bg-slate-800 dark:border-slate-700" />
+                      <div class="md:col-span-3 flex gap-2">
+                        <button (click)="saveEdit(c)" class="px-2 py-1 rounded bg-emerald-600 text-white">บันทึก</button>
+                        <button (click)="cancelEdit()" class="px-2 py-1 rounded border">ยกเลิก</button>
+                      </div>
+                    </div>
+                  </ng-template>
+                </td>
+              </tr>
+
+              <tr *ngIf="!loadingCalls && calls.length===0">
+                <td colspan="4" class="px-3 py-6 text-center text-gray-500 dark:text-slate-400">ไม่พบข้อมูล</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div *ngIf="loadingCalls" class="text-sm text-gray-500 dark:text-slate-400 mt-4">กำลังโหลด...</div>
+
+        <!-- Pagination -->
+        <div class="flex items-center justify-between mt-4">
+          <div class="text-sm text-gray-600 dark:text-slate-300">
+            หน้า {{ page }} <span *ngIf="totalKnown">/ {{ totalPages }}</span>
+            <span *ngIf="totalKnown">• รวม {{ total | number }}</span>
+          </div>
+          <div class="flex gap-2">
+            <button (click)="prevPage()" [disabled]="page===1"
+                    class="px-3 py-2 rounded-lg border bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50
+                           dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700">ก่อนหน้า</button>
+            <button (click)="nextPage()" [disabled]="!hasNext"
+                    class="px-3 py-2 rounded-lg border bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50
+                           dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700">ถัดไป</button>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+  </div>
+</div>

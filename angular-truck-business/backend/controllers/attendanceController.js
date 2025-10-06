@@ -517,3 +517,100 @@ export const checkOutByEmployeeAndDate = async (req, res) => {
     return res.status(500).json({ error: 'Failed to check-out' });
   }
 };
+
+
+// --- FOR DASHBOARD: GET /api/dashboard/attendance?start=YYYY-MM-DD&end=YYYY-MM-DD[&countAbsentWhenNoData=1]
+export async function getDashboardAttendance(req, res) {
+  try {
+    const startYmd = String(req.query.start || '');
+    const endYmd   = String(req.query.end   || '');
+    if (!startYmd || !endYmd) {
+      return res.status(400).json({ error: 'start & end are required (YYYY-MM-DD)' });
+    }
+
+    // ถ้าใส่ countAbsentWhenNoData=1 จะนับ "วันว่าง" เป็นขาด (พฤติกรรมเดิม)
+    // ค่าเริ่มต้นไม่ใส่ -> วันว่างไม่นับเป็นขาด
+    const countAbsentWhenNoData =
+      String(req.query.countAbsentWhenNoData || '0') === '1';
+
+    // แปลงเป็น UTC และทำให้ end เป็น exclusive (+1 วัน)
+    const start = normalizeYMDToUTC(startYmd);
+    const endEx = normalizeYMDToUTC(endYmd);
+    endEx.setUTCDate(endEx.getUTCDate() + 1);
+
+    // จำนวนพนักงานทั้งหมด (ใช้เป็น working ของแต่ละวัน)
+    const employees = await prisma.employee.findMany({ select: { id: true } });
+    const working = employees.length;
+
+    // โหลดเช็คอิน/ลาในช่วง
+    const [attRows, leaveRows] = await Promise.all([
+      prisma.attendance.findMany({
+        where: { work_date: { gte: start, lt: endEx } },
+        select: { employee_id: true, work_date: true, status: true }, // 'ON_TIME' | 'LATE'
+      }),
+      prisma.leaveRequest.findMany({
+        where: { leave_date: { gte: start, lt: endEx } },
+        select: { employee_id: true, leave_date: true },
+      }),
+    ]);
+
+    // รวมเป็นรายวัน (กันซ้ำต่อคนต่อวัน)
+    const seenAtt = new Set();   // empId@YYYY-MM-DD สำหรับ Attendance
+    const seenLv  = new Set();   // empId@YYYY-MM-DD สำหรับ Leave
+    const byDay   = new Map();   // ymd -> { onTime, late, leave }
+
+    const accOf = (ymd) => {
+      const o = byDay.get(ymd) || { onTime: 0, late: 0, leave: 0 };
+      if (!byDay.has(ymd)) byDay.set(ymd, o);
+      return o;
+    };
+
+    for (const r of attRows) {
+      const ymd = ymdUTC(r.work_date);
+      const ek  = empDayKey(r.employee_id, ymd);
+      if (seenAtt.has(ek)) continue; // กันซ้ำ
+      seenAtt.add(ek);
+      const o = accOf(ymd);
+      if (r.status === 'LATE') o.late++;
+      else o.onTime++; // ถือว่าเป็น "ตรงเวลา" ถ้าไม่ใช่ LATE
+    }
+
+    for (const r of leaveRows) {
+      const ymd = ymdUTC(r.leave_date);
+      const ek  = empDayKey(r.employee_id, ymd);
+      if (seenAtt.has(ek)) continue; // มีเช็คอินแล้ว ไม่นับเป็นลา
+      if (seenLv.has(ek)) continue;  // กันซ้ำใบลา
+      seenLv.add(ek);
+      const o = accOf(ymd);
+      o.leave++;
+    }
+
+    // สร้างผลลัพธ์ครบทุกวันในช่วง
+    const days = [];
+    for (let d = new Date(start); d < endEx; d.setUTCDate(d.getUTCDate() + 1)) {
+      const ymd = ymdUTC(d);
+      const o   = byDay.get(ymd) || { onTime: 0, late: 0, leave: 0 };
+      const present   = o.onTime + o.late;
+      const hasAny    = (present + o.leave) > 0; // วันนั้นมีข้อมูลเข้า/ลาไหม?
+      const absent    = (hasAny || countAbsentWhenNoData)
+        ? Math.max(0, working - present - o.leave)
+        : 0;
+
+      days.push({
+        date: ymd,
+        working,
+        present,
+        onTime: o.onTime,
+        late:   o.late,
+        leave:  o.leave,
+        absent,
+      });
+    }
+
+    return res.json({ totalEmployees: working, days });
+  } catch (e) {
+    console.error('[getDashboardAttendance]', e);
+    res.status(500).json({ error: 'Failed to build dashboard attendance' });
+  }
+}
+

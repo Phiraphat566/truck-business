@@ -16,23 +16,17 @@ function mergeYears(...lists) {
 
 /**
  * GET /api/finance/years
- * รวมปีจาก:
- *  - InvoiceYear (ปีที่ผู้ใช้เพิ่มไว้ล่วงหน้า)
- *  - Income (ปีที่มีรายรับจริง)
- *  - Invoice (ปีจาก contractDate/dueDate/paidAt)
+ * รวมปีจาก: InvoiceYear + ปีเงินเข้าจริง (PaymentRecord ของ Income) + ปีจาก Invoice
  */
 export const getFinanceYears = async (_req, res) => {
   try {
-    // ปี manual จากตาราง InvoiceYear
-    const manualYears = await prisma.invoiceYear.findMany({
-      select: { year: true }
-    });
+    const manualYears = await prisma.invoiceYear.findMany({ select: { year: true } });
 
-    // ปีจากรายรับจริง
+    // ปีจาก "เงินเข้าจริง"
     const incomeYears = await prisma.$queryRaw/*sql*/`
-      SELECT DISTINCT YEAR(income_date) AS year
-      FROM Income
-      WHERE income_date IS NOT NULL
+      SELECT DISTINCT YEAR(payment_date) AS year
+      FROM PaymentRecord
+      WHERE income_id IS NOT NULL
       ORDER BY year
     `;
 
@@ -51,7 +45,6 @@ export const getFinanceYears = async (_req, res) => {
       incomeYears,
       invoiceYears
     );
-
     return res.json({ years });
   } catch (e) {
     console.error('getFinanceYears error:', e);
@@ -61,14 +54,14 @@ export const getFinanceYears = async (_req, res) => {
 
 /**
  * GET /api/finance/years/income
- * เฉพาะปีที่มีรายรับจริง (ไม่รวม InvoiceYear)
+ * เฉพาะปีที่มี "เงินเข้าจริง" (PaymentRecord ของ Income)
  */
 export const getIncomeYears = async (_req, res) => {
   try {
     const rows = await prisma.$queryRaw/*sql*/`
-      SELECT DISTINCT YEAR(income_date) AS year
-      FROM Income
-      WHERE income_date IS NOT NULL
+      SELECT DISTINCT YEAR(payment_date) AS year
+      FROM PaymentRecord
+      WHERE income_id IS NOT NULL
       ORDER BY year
     `;
     return res.json({ years: mergeYears(rows) });
@@ -81,7 +74,6 @@ export const getIncomeYears = async (_req, res) => {
 /**
  * GET /api/finance/years/invoice
  * รวมปีจาก InvoiceYear (+) ปีที่มีข้อมูลจริงใน Invoice
- * -> ใช้กับหน้า Billing เพื่อให้ปีไม่หายแม้ยังไม่มี invoice
  */
 export const getInvoiceYears = async (_req, res) => {
   try {
@@ -100,7 +92,6 @@ export const getInvoiceYears = async (_req, res) => {
       manual.map(r => ({ year: r.year })),
       actual
     );
-
     return res.json({ years });
   } catch (e) {
     console.error('getInvoiceYears error:', e);

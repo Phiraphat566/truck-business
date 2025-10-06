@@ -70,6 +70,31 @@
         <span class="w-6 flex justify-center"><i class="ni ni-calendar-grid-58 text-xl"></i></span>
         <span>Income</span>
       </a>
+      
+      <a
+        routerLink="/truck-detail"
+        routerLinkActive="active-link"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="flex items-center gap-3 px-4 py-2 rounded-lg transition nav-link hover:bg-gray-100 dark:hover:bg-slate-800"
+        [ngClass]="router.isActive('/truck-detail', false)
+          ? 'text-blue-600 dark:text-blue-400 font-semibold bg-blue-50 dark:bg-blue-950/30'
+          : ''">
+        <span class="w-6 flex justify-center"><i class="ni ni-calendar-grid-58 text-xl"></i></span>
+        <span>Truck Detail</span>
+      </a>
+
+      <a
+        routerLink="/chat-call"
+        routerLinkActive="active-link"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="flex items-center gap-3 px-4 py-2 rounded-lg transition nav-link hover:bg-gray-100 dark:hover:bg-slate-800"
+        [ngClass]="router.isActive('/chat-call', false)
+          ? 'text-blue-600 dark:text-blue-400 font-semibold bg-blue-50 dark:bg-blue-950/30'
+          : ''">
+        <span class="w-6 flex justify-center"><i class="ni ni-calendar-grid-58 text-xl"></i></span>
+        <span>Chat Call</span>
+      </a>
+
     </nav>
 
     <div class="mt-auto pt-6">
