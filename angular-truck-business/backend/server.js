@@ -43,6 +43,9 @@ import financeMonthlySummaryRoutes from './routes/financeMonthlySummaryRoutes.js
 
 import dashboardRoutes from './routes/dashboardRoutes.js';
 
+import authRoutes from './routes/authRoutes.js';
+
+import staffAdminRoutes from './routes/staffAdminRoutes.js';
 
 dotenv.config();
 
@@ -100,6 +103,10 @@ app.use('/api/payroll', payrollRoutes);
 app.use('/api/finance', financeMonthlySummaryRoutes);
 
 app.use('/api/dashboard', dashboardRoutes);
+
+app.use('/api/auth', authRoutes);
+
+app.use('/api/staff', staffAdminRoutes);
 
 
 app.get('/api/line/webhook/ping', (_req, res) => res.send('ok'));
